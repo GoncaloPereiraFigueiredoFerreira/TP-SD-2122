@@ -1,3 +1,5 @@
+package DataLayer;
+
 public class Utilizador {
 
 	private final String idUtilizador;
