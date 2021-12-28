@@ -1,5 +1,7 @@
 package Desmultiplexer;
 
+import Desmultiplexer.Operacoes.OperacaoI;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.Condition;
@@ -7,11 +9,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class QueueOperacao {
     private Deque<ConnectionPlusByteArray> pedidos = new ArrayDeque<>();
-    private final Operacao operacao;
+    private final OperacaoI operacao;
     private ReentrantLock rlock = new ReentrantLock();
     private Condition isEmpty = rlock.newCondition();
+    private Worker thread;
 
-    public class Worker implements Runnable{
+    public class Worker extends Thread{
         @Override
         public void run() {
             while (true){
@@ -22,13 +25,17 @@ public class QueueOperacao {
                 } catch (InterruptedException e) {
                     break;
                 }
-
             }
         }
     }
 
-    public QueueOperacao(Operacao operacao){
+    public QueueOperacao(OperacaoI operacao){
         this.operacao=operacao;
+        thread.start();
+    }
+
+    public void stop(){
+        thread.interrupt();
     }
 
     boolean inserePedido(ConnectionPlusByteArray pedido){
@@ -39,7 +46,7 @@ public class QueueOperacao {
     boolean executaProxPedido(){
         ConnectionPlusByteArray cpba = pedidos.pop();
         if(cpba!=null){
-            operacao.run(cpba.getBytes(),cpba.getTg());
+            operacao.newRun(cpba);
             return true;
         }
         return false;

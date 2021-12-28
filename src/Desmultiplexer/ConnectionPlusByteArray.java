@@ -1,8 +1,8 @@
 package Desmultiplexer;
 
 public class ConnectionPlusByteArray {
-    byte[] bytes;
-    TaggedConnection tg;
+    private final byte[] bytes;
+    private final TaggedConnection tg;
 
     public ConnectionPlusByteArray(byte[] bytes,TaggedConnection tg){
         this.bytes=bytes.clone();
