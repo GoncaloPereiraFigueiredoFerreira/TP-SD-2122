@@ -1,15 +1,40 @@
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Viagem {
 
-	private String idReserva;
-	private List<String> listaVoos;
-	private LocalDate data;
+	private static int proxIdReserva = 0;
+	private final int idReserva;
+	private final String idUtilizador;
+	private final List<String> listaVoos;
+	private final LocalDate data;
 
-	public Viagem(String idReserva, List<String> listaVoos, LocalDate data) {
-		this.idReserva = idReserva;
-		this.listaVoos = listaVoos;
-		this.data 	   = data;
+	/**
+	 * Construtor para uma viagem.
+	 * @param idUtilizador Identificador do utilizador que reservou os voos que constituem a viagem.
+	 * @param listaVoos Lista dos identificadores dos voos que constituem a viagem
+	 * @param data Data em que a viagem é suposto acontecer
+	 */
+	public Viagem(String idUtilizador, List<String> listaVoos, LocalDate data) {
+		this.idReserva    = proxIdReserva++;
+		this.idUtilizador = idUtilizador;
+		this.listaVoos 	  = new ArrayList<>(listaVoos);
+		this.data 	   	  = data;
 	}
+
+
+	// ****** Getters ******
+
+	/** @return Identificador do utilizador que reservou os voos que constituem a viagem */
+	public String getIdUtilizador() { return idUtilizador; }
+
+	/** @return Identificador da reserva */
+	public Integer getIdReserva() { return idReserva; }
+
+	/** @return Lista dos identificadores dos voos que constituem a viagem */
+	public List<String> getListaVoos() { return new ArrayList<>(listaVoos); }
+
+	/** @return Data em que a viagem é suposto acontecer */
+	public LocalDate getData() { return data; }
 }
