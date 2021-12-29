@@ -1,36 +1,56 @@
 package Desmultiplexer;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class Cliente {
     private TaggedConnection connect() throws IOException {
-        Socket s = new Socket("localhost", 8888);
-        return new TaggedConnection(s);
+        try {
+            Socket s = new Socket("localhost", 8888);
+            return new TaggedConnection(s);
+        } catch (ConnectException ce) {
+            return null;
+        }
     }
     //Deviamos ter operaçao para saber quais as suas reservas
     //Deviamos retornar a data na reserva
 
-    public boolean criaConta(String username,String password) { //TODO:: THREAD DE CRIAR CONTA | tag 0
+
+    public int fecharServidor() { //tag -1
         try {
-            TaggedConnection tc= connect();
+            TaggedConnection tc = connect();
+            if(tc==null) return -1;
+            // Envia tag -1 para sinalizar fecho
+            tc.send(-1, new byte[0]);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int criaConta(String username,String password) { //tag 0
+        try {
+            TaggedConnection tc = connect();
+            if(tc==null) return -1;
             // Envia uma password e um username
             tc.send(0, (username).getBytes(StandardCharsets.UTF_8));
             tc.send(0, (password).getBytes(StandardCharsets.UTF_8));
 
             // Recebe uma confirmação de criação de conta
             Frame frame = tc.receive();
-            return frame.getData()[0] == (byte) 0;  //0 significa que a conta foi criada, -1 caso contrário
+            return frame.getTag();  //0 significa que a conta foi criada, 1 caso contrário
         } catch (Exception e) {
-            return false;
+            return 1;
         }
     }
 
-    public boolean addVoo(String origem,String destino,int capacidade) { //TODO:: THREAD DE Adicionar Voo | tag 1
+    public int addVoo(String origem,String destino,int capacidade) { //TODO:: THREAD DE Adicionar Voo | tag 1
         try {
             TaggedConnection tc= connect();
+            if(tc==null) return -1;
             // Envia uma origem destino e capacidade
             tc.send(1, (origem).getBytes(StandardCharsets.UTF_8));  //Enviar Origem
             tc.send(1, (destino).getBytes(StandardCharsets.UTF_8)); //Enviar destino
@@ -38,9 +58,9 @@ public class Cliente {
 
             // Recebe uma confirmação da adição
             Frame frame = tc.receive();
-            return frame.getData()[0] == (byte) 0;  //0 significa que o voo foi criado, -1 caso contrário
+            return frame.getTag();  //0 significa que o voo foi criado, 1 caso contrário
         } catch (Exception e) {
-            return false;
+            return 1;
         }
     }
 

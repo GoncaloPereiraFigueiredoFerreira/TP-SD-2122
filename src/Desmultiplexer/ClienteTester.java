@@ -12,21 +12,26 @@ public class ClienteTester {
         Cliente cliente = new Cliente();
         Scanner sc = new Scanner(System.in);
 
-        while (true) {
+        int flag=0;
+        while (flag!=-1) {
+
+            System.out.println("Ensira a proxima operacao");
             int option = sc.nextInt();
             Thread t = null;
-            boolean flag = false;
 
             //Need to know the opcode
             switch (option) {
-                case 1:
+                case 0 -> flag=cliente.fecharServidor();
+                case 1 -> {
                     MenuInput m1 = new MenuInput("Insira o seu username:", "Username:");
                     MenuInput m2 = new MenuInput("Insira o seu password:", "Password:");
                     m1.executa();
                     m2.executa();
-                    cliente.criaConta(m1.getOpcao(), m2.getOpcao());
-                    break;
-                case 2:
+                    flag = cliente.criaConta(m1.getOpcao(), m2.getOpcao());
+                    if(flag==0) System.out.println("Cliente criado com sucesso");
+                    if(flag==1) System.out.println("Falha ao criar cliente");
+                }
+                case 2 -> {
                     MenuInput m5 = new MenuInput("Insira a origem:", "Origem:");
                     MenuInput m6 = new MenuInput("Insira o destino:", "Destino:");
                     MenuInput m7 = new MenuInput("Insira a capacidade:", "Capacidade:");
@@ -44,9 +49,8 @@ public class ClienteTester {
                             dummyflag = true;
                         }
                     } while (dummyflag);
-
                     cliente.addVoo(m5.getOpcao(), m6.getOpcao(), n);
-                    break;
+                }
                     /*
                 case 4:
                     //Menu de datas
@@ -82,5 +86,6 @@ public class ClienteTester {
             }
             //if (!flag) t.start();
         }
+        if(flag==-1) System.out.println("O Servidor encontra-se fechado, tente novamente mais tarde");
     }
 }
