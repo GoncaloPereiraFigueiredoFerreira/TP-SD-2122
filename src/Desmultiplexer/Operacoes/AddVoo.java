@@ -5,14 +5,14 @@ import Desmultiplexer.ConnectionPlusByteArray;
 import Desmultiplexer.TaggedConnection;
 import java.io.IOException;
 
-public class CriaConta implements OperacaoI{
+public class AddVoo implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
 
-    public CriaConta(){}
+    public AddVoo(){}
 
-    public CriaConta(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
+    public AddVoo(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
         this.bytes= cpba.getBytes();
         this.tc= cpba.getTg();
         this.gestorDeDados=gestorDeDados;
@@ -20,7 +20,7 @@ public class CriaConta implements OperacaoI{
 
     @Override
     public int getTag() {
-        return 0;
+        return 1;
     }
 
     @Override

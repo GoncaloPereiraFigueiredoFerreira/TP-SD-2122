@@ -1,7 +1,6 @@
 package Desmultiplexer;
 
 import DataLayer.GestorDeDados;
-import Desmultiplexer.Operacoes.OperacaoHI;
 import Desmultiplexer.Operacoes.CriaConta;
 import Desmultiplexer.Operacoes.OperacaoI;
 
@@ -16,10 +15,11 @@ public class Server extends Thread {
     private GestorDeDados gestorDeDados= new GestorDeDados(); //todo contrutor de server com opcao de dar load
 
     public Server(){
-        List<OperacaoI> operacoes = new ArrayList<>();
-        operacoes.add(new CriaConta());
-        operacoes.add(new OperacaoHI());
-        gestorDeQueues = new GestorDeQueues(operacoes,gestorDeDados);
+        gestorDeQueues= new GestorDeQueues();
+    }
+
+    public boolean loadServer(List<OperacaoI> operacoes){
+        return gestorDeQueues.loadGestorDeQueues(operacoes,gestorDeDados);
     }
     @Override
     public void run() {
