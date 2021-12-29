@@ -12,7 +12,7 @@ public class QueueOperacao {
     private final OperacaoI operacao;
     private ReentrantLock rlock = new ReentrantLock();
     private Condition isEmpty = rlock.newCondition();
-    private Worker thread;
+    private Worker thread = new Worker();
 
     public class Worker extends Thread{
         @Override
