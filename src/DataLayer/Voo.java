@@ -7,12 +7,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Voo implements Comparable<Voo> {
 
-	private final String idVoo;   //Identificador do voo
-	private final String origem;  //Nome da origem
-	private final String destino; //Nome do destino
-	private final int capacidade; //Capacidade máxima de viajantes num voo
-	private final Map<LocalDate,Reservas> reservas; //Reservas relativas a este voo
-	private final ReadWriteLock RWlock = new ReentrantReadWriteLock(); //Lock que permite adicionar novos dias para reservas
+	private String idVoo;   //Identificador do voo
+	private String origem;  //Nome da origem
+	private String destino; //Nome do destino
+	private int capacidade; //Capacidade máxima de viajantes num voo
+	private Map<LocalDate,Reservas> reservas; //Reservas relativas a este voo
+	private ReadWriteLock RWlock; //Lock que permite adicionar novos dias para reservas
 
 	/**
 	 * Construtor de um voo.
@@ -22,10 +22,11 @@ public class Voo implements Comparable<Voo> {
 	 */
 	public Voo(String origem, String destino, int capacidade) {
 		this.reservas   = new HashMap<>();
-		this.idVoo 	    = origem + destino + capacidade; System.out.println(idVoo);
+		this.idVoo 	    = origem + destino + capacidade;
 		this.origem     = origem;
 		this.destino    = destino;
 		this.capacidade = capacidade;
+		this.RWlock     = new ReentrantReadWriteLock();
 	}
 
 	// ****** Getters ******
@@ -160,10 +161,25 @@ public class Voo implements Comparable<Voo> {
 		return false;
 	}
 
+
+	// ****** Comparacao ******
+
 	@Override
 	public int compareTo(Voo o) {
 		if(o != null)
 			return destino.compareTo(o.getDestino());
 		return 1;
+	}
+
+	private Voo(String destino){ this.destino = destino; }
+
+	/**
+	 * Voo apenas utilizado para procuras pelo destino, que utilizem a ordem natural deste objeto.
+	 * @param destino Destino que se pretende procurar
+	 * @return voo com o destino pretendido.
+	 * @warning Restantes variaveis do objeto não são inicializadas.
+	 */
+	public static Voo vooParaComparacao(String destino){
+		return new Voo(destino);
 	}
 }
