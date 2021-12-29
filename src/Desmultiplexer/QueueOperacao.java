@@ -1,5 +1,6 @@
 package Desmultiplexer;
 
+import DataLayer.GestorDeDados;
 import Desmultiplexer.Operacoes.OperacaoI;
 
 import java.util.ArrayDeque;
@@ -14,6 +15,7 @@ public class QueueOperacao {
     private Condition isEmpty = rlock.newCondition();
     private Worker thread = new Worker();
     private boolean stopCall;
+    private GestorDeDados gestorDeDados; //DATA
 
     public class Worker extends Thread {
         @Override
@@ -36,7 +38,8 @@ public class QueueOperacao {
         }
     }
 
-    public QueueOperacao(OperacaoI operacao){
+    public QueueOperacao(OperacaoI operacao,GestorDeDados gestorDeDados){
+        this.gestorDeDados=gestorDeDados;
         this.operacao=operacao;
         this.stopCall=false;
         thread.start();
@@ -74,7 +77,7 @@ public class QueueOperacao {
         }
 
         if(cpba!=null){
-            operacao.newRun(cpba);
+            operacao.newRun(cpba,gestorDeDados);
             return true;
         }
         return false;

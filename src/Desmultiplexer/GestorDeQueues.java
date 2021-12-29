@@ -1,5 +1,6 @@
 package Desmultiplexer;
 
+import DataLayer.GestorDeDados;
 import Desmultiplexer.Operacoes.OperacaoI;
 import java.io.IOException;
 import java.util.HashMap;
@@ -9,9 +10,9 @@ import java.util.Map;
 public class GestorDeQueues {
     private Map<Integer,QueueOperacao> queues = new HashMap<>();
 
-    public GestorDeQueues(List<OperacaoI> operacoes){
+    public GestorDeQueues(List<OperacaoI> operacoes,GestorDeDados gestorDeDados){
         for (int i=0;i<operacoes.size();i++){
-            queues.put(i,new QueueOperacao(operacoes.get(i)));
+            queues.put(i,new QueueOperacao(operacoes.get(i),gestorDeDados));
         }
     }
 

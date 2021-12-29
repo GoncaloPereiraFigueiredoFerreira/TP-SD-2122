@@ -1,7 +1,9 @@
 package Desmultiplexer;
 
+import DataLayer.GestorDeDados;
 import Desmultiplexer.Operacoes.OperacaoHI;
-import Desmultiplexer.Operacoes.OperacaoHello;
+import Desmultiplexer.Operacoes.CriaConta;
+import Desmultiplexer.Operacoes.OperacaoI;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,12 +13,13 @@ import java.util.List;
 
 public class Server extends Thread {
     private GestorDeQueues gestorDeQueues;
+    private GestorDeDados gestorDeDados= new GestorDeDados(); //todo contrutor de server com opcao de dar load
 
     public Server(){
-        List operacoes = new ArrayList();
-        operacoes.add(new OperacaoHello());
+        List<OperacaoI> operacoes = new ArrayList<>();
+        operacoes.add(new CriaConta());
         operacoes.add(new OperacaoHI());
-        gestorDeQueues = new GestorDeQueues(operacoes);
+        gestorDeQueues = new GestorDeQueues(operacoes,gestorDeDados);
     }
     @Override
     public void run() {
