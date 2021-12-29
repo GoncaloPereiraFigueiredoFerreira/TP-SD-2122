@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class Voo {
+public class Voo implements Comparable<Voo> {
 
 	private final String idVoo;   //Identificador do voo
 	private final String origem;  //Nome da origem
@@ -22,7 +22,7 @@ public class Voo {
 	 */
 	public Voo(String origem, String destino, int capacidade) {
 		this.reservas   = new HashMap<>();
-		this.idVoo 	    = origem + destino;
+		this.idVoo 	    = origem + destino + capacidade; System.out.println(idVoo);
 		this.origem     = origem;
 		this.destino    = destino;
 		this.capacidade = capacidade;
@@ -125,7 +125,7 @@ public class Voo {
 		return true;
 	}
 
-	// ****** Auxiliares ******
+	// ****** Métodos auxiliares ******
 
 	/**
 	 * Regista um novo dia onde este voo acontece.
@@ -135,12 +135,35 @@ public class Voo {
 	public Reservas registarVooNovoDia(LocalDate data){
 		try {
 			RWlock.writeLock().lock();
-			if(reservas.get(data) == null){
-				Reservas rs = new Reservas();
+			Reservas rs = reservas.get(data);
+			if(rs == null){
+				rs = new Reservas();
 				reservas.put(data,rs);
-				return rs;
 			}
-			return null;
+			return rs;
 		} finally { RWlock.writeLock().unlock(); }
+	}
+
+	/**
+	 * Verifica se existe possibilidade de efetuar uma reserva.
+	 * De modo a obter um resultado seguro ao fazer uma reserva, sugere-se a obtenção do lock para a data inserida, antes de executar esta verificação.
+	 * @param data Data na qual se pretende que haja um voo
+	 * @return o objeto que permite guardar as reservas relativas a esse dia
+	 */
+	public boolean podeReservar (LocalDate data){
+		try {
+			RWlock.readLock().lock();
+			Reservas rs = reservas.get(data);
+			if(rs == null || rs.getNrViajantes() < capacidade)
+				return true;
+		} finally { RWlock.readLock().unlock(); }
+		return false;
+	}
+
+	@Override
+	public int compareTo(Voo o) {
+		if(o != null)
+			return destino.compareTo(o.getDestino());
+		return 1;
 	}
 }

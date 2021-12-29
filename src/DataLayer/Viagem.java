@@ -2,6 +2,7 @@ package DataLayer;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Viagem {
@@ -15,10 +16,10 @@ public class Viagem {
 	/**
 	 * Construtor para uma viagem.
 	 * @param idUtilizador Identificador do utilizador que reservou os voos que constituem a viagem.
-	 * @param listaVoos Lista dos identificadores dos voos que constituem a viagem
+	 * @param listaVoos Coleção dos identificadores dos voos que constituem a viagem
 	 * @param data Data em que a viagem é suposto acontecer
 	 */
-	public Viagem(String idUtilizador, List<String> listaVoos, LocalDate data) {
+	public Viagem(String idUtilizador, Collection<String> listaVoos, LocalDate data) {
 		this.idReserva    = proxIdReserva++;
 		this.idUtilizador = idUtilizador;
 		this.listaVoos 	  = new ArrayList<>(listaVoos);
@@ -35,7 +36,7 @@ public class Viagem {
 	public Integer getIdReserva() { return idReserva; }
 
 	/** @return Lista dos identificadores dos voos que constituem a viagem */
-	public List<String> getListaVoos() { return new ArrayList<>(listaVoos); }
+	public List<String> getColecaoVoos() { return new ArrayList<>(listaVoos); }
 
 	/** @return Data em que a viagem é suposto acontecer */
 	public LocalDate getData() { return data; }

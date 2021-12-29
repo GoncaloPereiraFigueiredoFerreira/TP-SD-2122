@@ -26,6 +26,13 @@ public class Reservas{
 		} finally { rl.unlock(); }
 	}
 
+	/** @return Número de utilizadores (viajantes) que fizeram reserva */
+	public int getNrViajantes() {
+		try {
+			rl.lock();
+			return viajantes.size();
+		} finally { rl.unlock(); }
+	}
 
 	// ****** Adicionar e Remover viajante ******
 
