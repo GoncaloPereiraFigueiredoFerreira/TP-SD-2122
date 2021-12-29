@@ -1,5 +1,7 @@
 package Desmultiplexer;
 
+import Desmultiplexer.Exceptions.ServerIsClosedException;
+
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -19,47 +21,61 @@ public class Cliente {
     //Deviamos retornar a data na reserva
 
 
-    public int fecharServidor() { //tag -1
+    public void fecharServidor() throws ServerIsClosedException { //tag -1
         try {
             TaggedConnection tc = connect();
-            if(tc==null) return -1;
+            if(tc==null) throw new ServerIsClosedException();
             // Envia tag -1 para sinalizar fecho
             tc.send(-1, new byte[0]);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return 0;
     }
 
-    public int criaConta(String username,String password) { //tag 0
+    public int criaConta(String username,String password,Boolean administrador) throws ServerIsClosedException{ //tag 0
         try {
             TaggedConnection tc = connect();
-            if(tc==null) return -1;
+            if(tc==null) throw new ServerIsClosedException();
             // Envia uma password e um username
             tc.send(0, (username).getBytes(StandardCharsets.UTF_8));
-            tc.send(0, (password).getBytes(StandardCharsets.UTF_8));
-
+            if(administrador)
+                tc.send(0, (password).getBytes(StandardCharsets.UTF_8));
+            else tc.send(1, (password).getBytes(StandardCharsets.UTF_8));
             // Recebe uma confirmação de criação de conta
             Frame frame = tc.receive();
             return frame.getTag();  //0 significa que a conta foi criada, 1 caso contrário
-        } catch (Exception e) {
+        } catch (IOException e) {
+            return 1;
+        }
+    }
+    public int login(String username,String password) throws ServerIsClosedException{ //tag 1
+        try {
+            System.out.println("Logging");
+            TaggedConnection tc = connect();
+            if(tc==null) throw new ServerIsClosedException();
+            // Envia uma password e um username
+            tc.send(1, (username).getBytes(StandardCharsets.UTF_8));
+            tc.send(1, (password).getBytes(StandardCharsets.UTF_8));
+            // Recebe uma confirmação de criação de conta
+            Frame frame = tc.receive();
+            return frame.getTag();  //0 significa que efetuou login de utilizador, 1 de admin  e -1 em caso de falha
+        } catch (IOException e) {
             return 1;
         }
     }
 
-    public int addVoo(String origem,String destino,int capacidade) { //TODO:: THREAD DE Adicionar Voo | tag 1
+    public int addVoo(String origem,String destino,int capacidade) throws ServerIsClosedException{ //TODO:: THREAD DE Adicionar Voo | tag 2
         try {
             TaggedConnection tc= connect();
-            if(tc==null) return -1;
+            if(tc==null) throw new ServerIsClosedException();
             // Envia uma origem destino e capacidade
-            tc.send(1, (origem).getBytes(StandardCharsets.UTF_8));  //Enviar Origem
-            tc.send(1, (destino).getBytes(StandardCharsets.UTF_8)); //Enviar destino
-            tc.send(1, ByteBuffer.allocate(4).putInt(capacidade).array()); //Enviar capacidade
+            tc.send(2, (origem).getBytes(StandardCharsets.UTF_8));  //Enviar Origem
+            tc.send(capacidade, (destino).getBytes(StandardCharsets.UTF_8)); //Enviar destino e capacidade
 
             // Recebe uma confirmação da adição
             Frame frame = tc.receive();
             return frame.getTag();  //0 significa que o voo foi criado, 1 caso contrário
-        } catch (Exception e) {
+        } catch (IOException e) {
             return 1;
         }
     }
