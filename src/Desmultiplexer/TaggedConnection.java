@@ -26,11 +26,10 @@ public class TaggedConnection implements AutoCloseable {
     public void send(int tag, byte[] data) throws IOException {
         wLock.lock();
         try {
-            dos.writeInt(4 + data.length);
             dos.writeInt(tag);
+            dos.writeInt(data.length);
             dos.write(data);
             dos.flush();
-            wLock.unlock();
         } finally {
             wLock.unlock();
         }
