@@ -10,7 +10,7 @@ public class Viagem {
 	private static int proxIdReserva = 0;
 	private final int idReserva;
 	private final String idUtilizador;
-	private final List<String> listaVoos;
+	private final Collection<String> listaVoos;
 	private final LocalDate data;
 
 	/**
@@ -40,4 +40,15 @@ public class Viagem {
 
 	/** @return Data em que a viagem é suposto acontecer */
 	public LocalDate getData() { return data; }
+
+	//tirar isto
+	@Override
+	public String toString() {
+		return "Viagem{" +
+				"idReserva=" + idReserva +
+				", idUtilizador='" + idUtilizador + '\'' +
+				", listaVoos=" + listaVoos +
+				", data=" + data +
+				'}';
+	}
 }

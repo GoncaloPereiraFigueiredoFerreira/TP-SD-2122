@@ -60,9 +60,14 @@ public class Voo implements Comparable<Voo> {
 			rs = reservas.get(data);
 		}finally { RWlock.readLock().unlock(); }
 
-		if(rs == null)
-			return false;
+		if(rs == null) {
+			if(registarVooNovoDia(data) != null)
+				return addViajante(idViajante, data);
+			else
+				return false;
+		}
 
+		//TODO - ver se este é um dos casos em que devemos fazer 2-fase locking, ou se isto continua correto
 		return rs.addViajante(idViajante,capacidade);
 	}
 
@@ -181,5 +186,16 @@ public class Voo implements Comparable<Voo> {
 	 */
 	public static Voo vooParaComparacao(String destino){
 		return new Voo(destino);
+	}
+
+	@Override
+	public String toString() {
+		return "Voo{" +
+				"idVoo='" + idVoo + '\'' +
+				", origem='" + origem + '\'' +
+				", destino='" + destino + '\'' +
+				", capacidade=" + capacidade +
+				", reservas=" + reservas +
+				'}';
 	}
 }

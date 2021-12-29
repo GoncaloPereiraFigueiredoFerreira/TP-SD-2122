@@ -59,7 +59,9 @@ public class Reservas{
 	 * @param idViajante Identificador do viajante
 	 */
 	public void removeViajante(String idViajante) {
-		try{ viajantes.remove(idViajante); }
+		try{
+			rl.lock();
+			viajantes.remove(idViajante); }
 		finally { rl.unlock(); }
 	}
 
@@ -74,4 +76,12 @@ public class Reservas{
 
 	/** Usado para desbloquear as reservas permitindo o acesso a novas threads. */
 	public void unlock(){ rl.unlock(); }
+
+	//TODO - tirar isto
+	@Override
+	public String toString() {
+		return "Reservas{" +
+				"viajantes=" + viajantes +
+				'}';
+	}
 }
