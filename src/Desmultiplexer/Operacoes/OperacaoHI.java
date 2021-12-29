@@ -7,6 +7,9 @@ public class OperacaoHI implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
 
+    public OperacaoHI(){
+    }
+
     public OperacaoHI(ConnectionPlusByteArray cpba){
         this.bytes= cpba.getBytes();
         this.tc= cpba.getTg();

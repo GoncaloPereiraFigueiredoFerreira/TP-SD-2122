@@ -13,38 +13,66 @@ public class QueueOperacao {
     private ReentrantLock rlock = new ReentrantLock();
     private Condition isEmpty = rlock.newCondition();
     private Worker thread = new Worker();
+    private boolean stopCall;
 
-    public class Worker extends Thread{
+    public class Worker extends Thread {
         @Override
         public void run() {
-            while (true){
-                while (executaProxPedido());  //Executar todos os pedidos da queue
-
-                try {  //Quando a queue estiver vazia espera
-                    isEmpty.await();
+            while (!stopCall) {
+                try {
+                    rlock.lock();
+                    while (pedidos.isEmpty())
+                        isEmpty.await();
                 } catch (InterruptedException e) {
                     break;
+                } finally {
+                    rlock.unlock();
                 }
+                executaProxPedido();
             }
+
+            while (!pedidos.isEmpty()) //Quando a stop call for true já não precisamos de nos preocupar com locks pois não vão ser recebidos mais pedidos
+                executaProxPedido();
         }
     }
 
     public QueueOperacao(OperacaoI operacao){
         this.operacao=operacao;
+        this.stopCall=false;
         thread.start();
     }
 
     public void stop(){
-        thread.interrupt();
+        try {
+            rlock.lock();
+            if(pedidos.isEmpty())
+                thread.interrupt();
+            else stopCall=true;
+        } finally {
+            rlock.unlock();
+        }
     }
 
-    boolean inserePedido(ConnectionPlusByteArray pedido){
-        isEmpty.signal();
-        return pedidos.offer(pedido);
+    public boolean inserePedido(ConnectionPlusByteArray pedido){
+        try {
+            rlock.lock();
+            boolean inserido = pedidos.offer(pedido);
+            isEmpty.signal();
+            return inserido;
+        } finally {
+            rlock.unlock();
+        }
     }
 
-    boolean executaProxPedido(){
-        ConnectionPlusByteArray cpba = pedidos.pop();
+    private boolean executaProxPedido(){
+        ConnectionPlusByteArray cpba;
+        try {
+            rlock.lock();
+            cpba = pedidos.pop();
+        } finally {
+            rlock.unlock();
+        }
+
         if(cpba!=null){
             operacao.newRun(cpba);
             return true;

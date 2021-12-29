@@ -1,12 +1,23 @@
 package Desmultiplexer;
 
+import Desmultiplexer.Operacoes.OperacaoHI;
+import Desmultiplexer.Operacoes.OperacaoHello;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server extends Thread {
     private GestorDeQueues gestorDeQueues;
 
+    public Server(){
+        List operacoes = new ArrayList();
+        operacoes.add(new OperacaoHello());
+        operacoes.add(new OperacaoHI());
+        gestorDeQueues = new GestorDeQueues(operacoes);
+    }
     @Override
     public void run() {
         try {

@@ -7,6 +7,9 @@ public class OperacaoHello implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
 
+    public OperacaoHello(){
+    }
+
     public OperacaoHello(ConnectionPlusByteArray cpba){
         this.bytes= cpba.getBytes();
         this.tc= cpba.getTg(); //Falta clone
