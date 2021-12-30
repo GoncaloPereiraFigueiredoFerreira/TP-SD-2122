@@ -26,10 +26,11 @@ public class QueueOperacao {
                     while (pedidos.isEmpty())
                         isEmpty.await();
                 } catch (InterruptedException e) {
-                    break;
+                    stopCall=true;
                 } finally {
                     rlock.unlock();
                 }
+
                 executaProxPedido();
             }
 
@@ -71,7 +72,7 @@ public class QueueOperacao {
         ConnectionPlusByteArray cpba;
         try {
             rlock.lock();
-            cpba = pedidos.pop();
+            cpba = pedidos.poll();
         } finally {
             rlock.unlock();
         }
