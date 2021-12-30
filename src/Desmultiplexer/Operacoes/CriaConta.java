@@ -4,12 +4,14 @@ import DataLayer.GestorDeDados;
 import Desmultiplexer.ConnectionPlusByteArray;
 import Desmultiplexer.Frame;
 import Desmultiplexer.TaggedConnection;
-import java.io.IOException;
+
+import java.io.*;
 
 public class CriaConta implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
+    int tag = 0;
 
     public CriaConta(){}
 
@@ -21,7 +23,7 @@ public class CriaConta implements OperacaoI{
 
     @Override
     public int getTag() {
-        return 0;
+        return tag;
     }
 
     @Override
@@ -32,15 +34,20 @@ public class CriaConta implements OperacaoI{
 
     public void run() {
         try {
-            String username = new String(bytes);
-            Frame f = tc.receive();
-            String password = new String(f.getData());
+            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ObjectInputStream ois = new ObjectInputStream(bais);
 
-            boolean adicionado = gestorDeDados.addUtilizador(username,password,f.getTag()==0);
+            String username = ois.readUTF();
+            String password = ois.readUTF();
+            boolean admin = ois.readBoolean();
 
+            ois.close();
+            bais.close();
+
+            boolean adicionado = gestorDeDados.addUtilizador(username,password,admin);
             if (adicionado)
-                tc.send(0,new byte[0]); //Conta criada com sucesso
-            else tc.send(1,new byte[0]); //Erro ao criar conta
+                sendConfirmacao(tc,0,tag); //Conta criada com sucesso
+            else sendConfirmacao(tc,1,tag); //Conta criada com sucesso
 
         } catch (IOException e) {
             e.printStackTrace();

@@ -21,6 +21,7 @@ public class Server extends Thread {
     public boolean loadServer(List<OperacaoI> operacoes){
         return gestorDeQueues.loadGestorDeQueues(operacoes,gestorDeDados);
     }
+
     @Override
     public void run() {
         try {

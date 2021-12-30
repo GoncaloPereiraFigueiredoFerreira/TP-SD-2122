@@ -5,6 +5,7 @@ import Desmultiplexer.Exceptions.ServerIsClosedException;
 import java.io.IOException;
 import java.net.Socket;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -23,6 +24,7 @@ public class ClienteTester {
 
             //Need to know the opcode
             try {
+                int flag=0;
                 switch (option) {
                     case -1 -> running=false; //Fechar cliente
                     case 0 -> cliente.fecharServidor(); //Fechar servidor
@@ -31,7 +33,7 @@ public class ClienteTester {
                         MenuInput m2 = new MenuInput("Insira uma password:", "Password:");
                         m1.executa();
                         m2.executa();
-                        int flag = cliente.criaConta(m1.getOpcao(), m2.getOpcao(),false);
+                        flag = cliente.criaConta(m1.getOpcao(), m2.getOpcao(),false);
                         if (flag == 0) System.out.println("Cliente criado com sucesso");
                         else if (flag == 1) System.out.println("Falha ao criar cliente");
                     }
@@ -40,7 +42,7 @@ public class ClienteTester {
                         MenuInput m2 = new MenuInput("Insira uma password:", "Password:");
                         m1.executa();
                         m2.executa();
-                        int flag = cliente.criaConta(m1.getOpcao(), m2.getOpcao(),true);
+                        flag = cliente.criaConta(m1.getOpcao(), m2.getOpcao(),true);
                         if (flag == 0) System.out.println("Aministrador criado com sucesso");
                         else if (flag == 1) System.out.println("Falha ao criar administrador");
                     }
@@ -49,7 +51,7 @@ public class ClienteTester {
                         MenuInput m2 = new MenuInput("Insira o seu password:", "Password:");
                         m1.executa();
                         m2.executa();
-                        int flag = cliente.login(m1.getOpcao(), m2.getOpcao());
+                        flag = cliente.login(m1.getOpcao(), m2.getOpcao());
                         if (flag == -1) System.out.println("Falha no login");
                         else if (flag == 0) System.out.println("Cliente logado com sucesso");
                         else if (flag == 1) System.out.println("Administrador logado com sucesso");
@@ -72,16 +74,27 @@ public class ClienteTester {
                                 dummyflag = true;
                             }
                         } while (dummyflag);
-                        int flag = cliente.addVoo(m5.getOpcao(), m6.getOpcao(), n);
+                        flag = cliente.addVoo(m5.getOpcao(), m6.getOpcao(), n);
                         if (flag == 0) System.out.println("Voo adicionado com sucesso");
                         else if (flag == 1) System.out.println("Falha ao adicionar voo");
                     }
-                    /*
-                case 4:
-                    //Menu de datas
-                    LocalDate l = LocalDate.now();
-                    t = new Cliente.Thread4(l);
-                    break;
+
+                    case 5 -> { //Encerrar um dia
+
+                        MenuInput m = new MenuInput("Insira a data com o seguinte formato \"YYYY-MM-DD\":", "Data:");
+                        m.executa();
+                        //Menu de datas
+                        try {
+                            String opcao = m.getOpcao();
+                            LocalDate.parse(opcao);
+                            flag = cliente.encerraDia(opcao);
+                            if (flag == 0) System.out.println("Dia fechado com sucesso");
+                            else if (flag == 1) System.out.println("Falha fechar o dia");
+                        } catch (DateTimeParseException dtpe){
+                            System.out.println("Inseriu uma data com o formato errado");
+                        }
+                    }
+                 /*
                 case 5:
                     //Menus de origem, destino, e data inicial e final
                     String origem = "";
@@ -109,7 +122,7 @@ public class ClienteTester {
 
                      */
                 }
-                //if (!flag) t.start();
+                if (flag==-2) System.out.println("Falha de conexão");
             }catch (ServerIsClosedException e){
                 System.out.println("O Servidor encontra-se fechado, tente novamente mais tarde");
             }

@@ -1,9 +1,6 @@
 package Desmultiplexer;
 
-import Desmultiplexer.Operacoes.AddVoo;
-import Desmultiplexer.Operacoes.CriaConta;
-import Desmultiplexer.Operacoes.Login;
-import Desmultiplexer.Operacoes.OperacaoI;
+import Desmultiplexer.Operacoes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +13,7 @@ public class ServerTeste {
         operacoes.add(new CriaConta());
         operacoes.add(new AddVoo());
         operacoes.add(new Login());
-
+        operacoes.add(new EncerraDia());
         if(!s.loadServer(operacoes)){
             System.out.println("Erro ao dar load ao servidor");
             return;

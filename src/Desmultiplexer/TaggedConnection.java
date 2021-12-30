@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TaggedConnection implements AutoCloseable {

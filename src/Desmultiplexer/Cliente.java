@@ -2,11 +2,12 @@ package Desmultiplexer;
 
 import Desmultiplexer.Exceptions.ServerIsClosedException;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 
 public class Cliente {
     private TaggedConnection connect() throws IOException {
@@ -20,8 +21,20 @@ public class Cliente {
     //Deviamos ter operaçao para saber quais as suas reservas
     //Deviamos retornar a data na reserva
 
+    public int confirmacao(Frame f,int opCode) throws IOException {
+        int rValue;
+        if(f.getTag()!=opCode) rValue=-2;
+        else {
+            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            rValue = ois.readInt();
+            ois.close();
+            bais.close();
+        }
+        return rValue;
+    }
 
-    public void fecharServidor() throws ServerIsClosedException { //tag -1
+    public void fecharServidor() throws ServerIsClosedException { //tag -1 //todo mudar void para boolean
         try {
             TaggedConnection tc = connect();
             if(tc==null) throw new ServerIsClosedException();
@@ -32,81 +45,116 @@ public class Cliente {
         }
     }
 
+    public void sendDadosCriaConta(TaggedConnection tc,String username,String password,Boolean admin, int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeUTF(username);
+        oos.writeUTF(password);
+        oos.writeBoolean(admin);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
     public int criaConta(String username,String password,Boolean administrador) throws ServerIsClosedException{ //tag 0
         try {
             TaggedConnection tc = connect();
             if(tc==null) throw new ServerIsClosedException();
-            // Envia uma password e um username
-            tc.send(0, (username).getBytes(StandardCharsets.UTF_8));
-            if(administrador)
-                tc.send(0, (password).getBytes(StandardCharsets.UTF_8));
-            else tc.send(1, (password).getBytes(StandardCharsets.UTF_8));
             // Recebe uma confirmação de criação de conta
-            Frame frame = tc.receive();
-            return frame.getTag();  //0 significa que a conta foi criada, 1 caso contrário
+            sendDadosCriaConta(tc,username,password,administrador,0);
+            return confirmacao(tc.receive(),0);
         } catch (IOException e) {
-            return 1;
-        }
-    }
-    public int login(String username,String password) throws ServerIsClosedException{ //tag 1
-        try {
-            System.out.println("Logging");
-            TaggedConnection tc = connect();
-            if(tc==null) throw new ServerIsClosedException();
-            // Envia uma password e um username
-            tc.send(1, (username).getBytes(StandardCharsets.UTF_8));
-            tc.send(1, (password).getBytes(StandardCharsets.UTF_8));
-            // Recebe uma confirmação de criação de conta
-            Frame frame = tc.receive();
-            return frame.getTag();  //0 significa que efetuou login de utilizador, 1 de admin  e -1 em caso de falha
-        } catch (IOException e) {
-            return 1;
+            return -2;
         }
     }
 
-    public int addVoo(String origem,String destino,int capacidade) throws ServerIsClosedException{ //TODO:: THREAD DE Adicionar Voo | tag 2
+    public void sendDadosLogin(TaggedConnection tc,String username,String password, int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeUTF(username);
+        oos.writeUTF(password);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
+    public int login(String username,String password) throws ServerIsClosedException{ //tag 1
+        try {
+            TaggedConnection tc = connect();
+            if(tc==null) throw new ServerIsClosedException();
+            // Envia uma password e um username
+            sendDadosLogin(tc,username,password,1);
+            // Recebe uma confirmação de criação de conta
+            return confirmacao(tc.receive(), 1);  //0 significa que efetuou login de utilizador, 1 de admin  e -1 em caso de falha
+        } catch (IOException e) {
+            return -2;
+        }
+    }
+
+    public void sendDadosAddVoo(TaggedConnection tc,String origem,String destino,int capacidade, int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeUTF(origem);
+        oos.writeUTF(destino);
+        oos.writeInt(capacidade);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
+    public int addVoo(String origem,String destino,int capacidade) throws ServerIsClosedException{ // tag 2
         try {
             TaggedConnection tc= connect();
             if(tc==null) throw new ServerIsClosedException();
             // Envia uma origem destino e capacidade
-            tc.send(2, (origem).getBytes(StandardCharsets.UTF_8));  //Enviar Origem
-            tc.send(capacidade, (destino).getBytes(StandardCharsets.UTF_8)); //Enviar destino e capacidade
-
-            // Recebe uma confirmação da adição
-            Frame frame = tc.receive();
-            return frame.getTag();  //0 significa que o voo foi criado, 1 caso contrário
+            sendDadosAddVoo(tc,origem,destino,capacidade,2);
+            return confirmacao(tc.receive(),2);  //0 significa que o voo foi criado, 1 caso contrário
         } catch (IOException e) {
             return 1;
         }
     }
 
-/*
-    public static class Thread4 extends Thread{
-        LocalDate date;
+    public void sendDadosEncerraDia(TaggedConnection tc,String dia,int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-        public Thread4 (LocalDate date){
-            this.date = date;
-        }
-        @Override
-        public void run(){
-            // Envia uma password e um username
-            // TODO:: ENCERRA DIA
-            String msg = "ola123";
-            try {
-                tc.send(4,(msg).getBytes(StandardCharsets.UTF_8));
-                Thread.sleep(100);
+        oos.writeUTF(dia);
+        oos.flush();
 
-                // Recebe uma confirmação de criação de conta
-                Frame frame = tc.receive();
-                System.out.println("(1) Reply: " + new String(frame.getData()));
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
+        oos.close();
+        baos.close();
     }
 
+   public int encerraDia(String dia) throws ServerIsClosedException{ // tag 3
+       try {
+           TaggedConnection tc= connect();
+           if(tc==null) throw new ServerIsClosedException();
+
+           sendDadosEncerraDia(tc,dia,3);
+           return confirmacao(tc.receive(),3);  //0 significa que o dia foi fechado, 1 caso contrário
+       } catch (IOException e) {
+           return 1;
+       }
+   }
+/*
     public static class Thread5 extends Thread{ //Unica thread necessária
         String origem;
         List<String> destinos;
