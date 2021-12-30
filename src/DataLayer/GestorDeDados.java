@@ -19,12 +19,12 @@ public class GestorDeDados {
 	private final Map<String,TreeSet<Voo>> grafoVoos  = new HashMap<>();
 
 	//Viagens
-	private final Map<Integer,Viagem> viagens = new HashMap<>();
-	private final ReentrantLock viagensLock   = new ReentrantLock();
+	private final Map<Integer,Viagem> viagens 		  = new HashMap<>();
+	private final ReentrantLock viagensLock  		  = new ReentrantLock();
 
 	//Dias Encerrados
-	private final Set<LocalDate> diasEncerrados    = new HashSet<>();
-	private final ReentrantLock diasEncerradosLock = new ReentrantLock();
+	private final Set<LocalDate> diasEncerrados    	  = new HashSet<>();
+	private final ReentrantLock diasEncerradosLock 	  = new ReentrantLock();
 
 	//TODO - remover estes prints
 
@@ -287,7 +287,7 @@ public class GestorDeDados {
 
 			Viagem viagem = viagens.get(idReserva);
 
-			if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador)) return false;
+			if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador) || isDayClosed(viagem.getData())) return false;
 
 			viagens.remove(idReserva);
 

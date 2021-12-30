@@ -22,7 +22,7 @@ public class Voo implements Comparable<Voo> {
 	 */
 	public Voo(String origem, String destino, int capacidade) {
 		this.reservas   = new HashMap<>();
-		this.idVoo 	    = origem + destino + capacidade;
+		this.idVoo 	    = origem + destino;
 		this.origem     = origem;
 		this.destino    = destino;
 		this.capacidade = capacidade;
