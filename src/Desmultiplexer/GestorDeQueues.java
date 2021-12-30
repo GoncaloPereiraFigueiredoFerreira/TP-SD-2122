@@ -29,7 +29,8 @@ public class GestorDeQueues {
         int tag = f.getTag();
         if(tag!=-1) {  // if tag == -1 then close
             QueueOperacao queue = queues.get(f.getTag());
-            queue.inserePedido(new ConnectionPlusByteArray(f.getData(), tg));
+            if(queue!=null)
+                queue.inserePedido(new ConnectionPlusByteArray(f.getData(), tg));
             return true;
         }
         else {

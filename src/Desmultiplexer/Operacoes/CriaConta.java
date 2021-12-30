@@ -2,6 +2,7 @@ package Desmultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
 import Desmultiplexer.ConnectionPlusByteArray;
+import Desmultiplexer.Frame;
 import Desmultiplexer.TaggedConnection;
 import java.io.IOException;
 
@@ -32,9 +33,10 @@ public class CriaConta implements OperacaoI{
     public void run() {
         try {
             String username = new String(bytes);
-            String password = new String(tc.receive().getData());
+            Frame f = tc.receive();
+            String password = new String(f.getData());
 
-            boolean adicionado = gestorDeDados.addUtilizador(username,password,false);
+            boolean adicionado = gestorDeDados.addUtilizador(username,password,f.getTag()==0);
 
             if (adicionado)
                 tc.send(0,new byte[0]); //Conta criada com sucesso

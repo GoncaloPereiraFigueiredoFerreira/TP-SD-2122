@@ -6,14 +6,14 @@ import Desmultiplexer.Frame;
 import Desmultiplexer.TaggedConnection;
 import java.io.IOException;
 
-public class AddVoo implements OperacaoI{
+public class Login implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
 
-    public AddVoo(){}
+    public Login(){}
 
-    public AddVoo(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
+    public Login(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
         this.bytes= cpba.getBytes();
         this.tc= cpba.getTg();
         this.gestorDeDados=gestorDeDados;
@@ -21,28 +21,23 @@ public class AddVoo implements OperacaoI{
 
     @Override
     public int getTag() {
-        return 2;
+        return 1;
     }
 
     @Override
     public void newRun(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new AddVoo(cpba,gestorDeDados));
+        Thread t = new Thread(new Login(cpba,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-            String origem = new String(bytes);
+            String username = new String(bytes);
+            String password = new String(tc.receive().getData());
 
-            Frame f = tc.receive();
-            String destino = new String(f.getData());
-            int capacidade = f.getTag();
-
-            boolean adicionado = gestorDeDados.addVoo(origem,destino,capacidade);
-
-            if (adicionado)
-                tc.send(0,new byte[0]); //Conta criada com sucesso
-            else tc.send(1,new byte[0]); //Erro ao criar conta
+            int logado = gestorDeDados.verificaCredenciais(username,password);
+            System.out.println(logado);
+            tc.send(logado,new byte[0]); //Retornar o estado do login
 
         } catch (IOException e) {
             e.printStackTrace();
