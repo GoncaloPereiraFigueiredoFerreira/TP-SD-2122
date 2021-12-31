@@ -1,5 +1,7 @@
 package DataLayer;
 
+import DataLayer.Exceptions.*;
+
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -14,9 +16,9 @@ public class GestorDeDados {
 	private final ReentrantLock usersLock 			  = new ReentrantLock();
 
 	//Voos
-	private final Map<String,Voo> voos     			  = new HashMap<>();
-	private final ReadWriteLock voosRwLock			  = new ReentrantReadWriteLock();
-	private final Map<String,TreeSet<Voo>> grafoVoos  = new HashMap<>();
+	private final Map<String,Voo> voos     			      = new HashMap<>();
+	private final ReadWriteLock voosRwLock			      = new ReentrantReadWriteLock();
+	private final Map<String, Map<String,Voo>> grafoVoos  = new HashMap<>();
 
 	//Viagens
 	private final Map<Integer,Viagem> viagens 		  = new HashMap<>();
@@ -25,6 +27,8 @@ public class GestorDeDados {
 	//Dias Encerrados
 	private final Set<LocalDate> diasEncerrados    	  = new HashSet<>();
 	private final ReentrantLock diasEncerradosLock 	  = new ReentrantLock();
+
+	private static final int MAXVOOS = 3;
 
 	//TODO - remover estes prints
 
@@ -50,7 +54,7 @@ public class GestorDeDados {
 		System.out.println(diasEncerrados);
 	}
 
-	// ****** Métodos Gerais ******
+	// ---------- Métodos Gerais ---------- //
 
 	/**
 	 * Regista utilizador/administrador.
@@ -67,6 +71,7 @@ public class GestorDeDados {
 			return true;
 		} finally { usersLock.unlock(); }
 	}
+
 
 	/**
 	 * Verifica se as credenciais fornecidas pertencem a algum utilizador.
@@ -92,8 +97,6 @@ public class GestorDeDados {
 	}
 
 
-	// ****** Métodos dos Voos ******
-
 	/**
 	 * Regista um novo voo.
 	 * @param origem Nome da origem
@@ -102,26 +105,26 @@ public class GestorDeDados {
 	 * @return true se foi registado com sucesso.
 	 */
 	public boolean addVoo(String origem, String destino, int capacidade){
-
-		//Verifica existência do voo
-		if (encontraVoo(origem, destino) != null) return false;
-
-		//Cria o voo a inserir
-		Voo voo = new Voo(origem, destino, capacidade);
-		String idVoo = voo.getIdVoo();
-
 		try {
 			voosRwLock.writeLock().lock();
 
+			//Verifica existência do voo
+			if (encontraVoo(origem, destino) != null) return false;
+
+
+			//Cria o voo a inserir
+			Voo voo = new Voo(origem, destino, capacidade);
+			String idVoo = voo.getIdVoo();
+
 			//Se ainda não existir o voo, regista-o e acrescenta uma entrada
 			//na lista de voos começados pela localização de origem fornecida
-			if(!voos.containsKey(idVoo)) {
+			if (!voos.containsKey(idVoo)) {
 
 				voos.put(idVoo, voo);
 
-				Set<Voo> l = grafoVoos.computeIfAbsent(origem, k -> new TreeSet<>());
+				Map<String,Voo> l = grafoVoos.computeIfAbsent(origem, k -> new HashMap<>());
 
-				l.add(voo);
+				l.put(destino,voo);
 
 				return true;
 			}
@@ -131,31 +134,42 @@ public class GestorDeDados {
 		return false;
 	}
 
-	//TODO - devo partir em bocados para evitar tanto tempo com o readLock, ou será que devo manter a atomicidade da operacao e abranger a procura dos voos no lock?
-	public Integer fazRevervasViagem(String idUtilizador, List<String> localizacoes, LocalDate dataInicial, LocalDate dataFinal) {
+
+	/**
+	 * Reserva os voos que passam pelas localizações fornecidas, no intervalo fornecido.
+	 * @param idUtilizador Identificador do utilizador que pretende fazer a reserva
+	 * @param localizacoes Localizações, organizadas pela ordem dos voos, que constituem a viagem
+	 * @param dataInicial Limite inferior do intervalo na qual se pretende a reserva
+	 * @param dataFinal Limite superior do intervalo na qual se pretende a reserva
+	 * @return o identificador da reserva caso tenha sido bem sucedida. 'null' caso não seja possível efetuar a reserva devido a falta de capacidade nos voos.
+	 * @throws numeroLocalizacoesInvalidoException Se o número de localizações fornecidas for menor ou igual a 1, ou se for superior a (MAXVOOS + 1).
+	 * @throws localizacoesInvalidasException Se não existir alguma das localizações fornecidas.
+	 */
+	public Integer fazRevervasViagem(String idUtilizador, List<String> localizacoes, LocalDate dataInicial, LocalDate dataFinal) throws numeroLocalizacoesInvalidoException, localizacoesInvalidasException {
 		List<Voo> voosOrdenados;
 		LocalDate data;
 		LocalDate dataReserva = null;
 
 		//Não pode executar reservas sem ter pelo menos uma origem e um destino
-		if (localizacoes.size() <= 1) return null;
+		if (localizacoes.size() <= 1 || localizacoes.size() > MAXVOOS + 1)
+			throw new numeroLocalizacoesInvalidoException();
 
-
-		//Encontra voos e ordena-os, de forma a impedir deadLocks
 		voosOrdenados = new ArrayList<>();
-		for (int i = 0; i < localizacoes.size() - 1; i++) {
-			Voo voo = encontraVoo(localizacoes.get(i), localizacoes.get(i + 1));
-
-			//Se as localizações fornecidas forem inválidas não pode fazer uma reserva
-			if (voo == null) return null;
-
-			voosOrdenados.add(voo);
-		}
-		voosOrdenados.sort(null);
-
 
 		try {
 			voosRwLock.readLock().lock();
+
+			//Encontra voos e ordena-os, de forma a impedir deadLocks
+			for (int i = 0; i < localizacoes.size() - 1; i++) {
+				Voo voo = encontraVoo(localizacoes.get(i), localizacoes.get(i + 1));
+
+				//Se as localizações fornecidas forem inválidas não pode fazer uma reserva
+				if (voo == null)
+					throw new localizacoesInvalidasException();
+
+				voosOrdenados.add(voo);
+			}
+			voosOrdenados.sort(null);
 
 			//Tenta efetuar as reservas
 			boolean podeReservar;
@@ -166,53 +180,95 @@ public class GestorDeDados {
 				if (!isDayClosed(data)) {
 					try {
 						//Obtem os locks de todas as reservas que pretende fazer
-						for (Voo voo : voosOrdenados) {
+						for (Voo voo : voosOrdenados)
 							voo.lock(data);
-						}
 
 						//Verifica disponibilidade para reserva
 						for (int i = 0; podeReservar && i < voosOrdenados.size(); i++) {
-
 							Voo voo = voosOrdenados.get(i);
-
 							if (!voo.podeReservar(data))
 								podeReservar = false;
 						}
 
 						//Faz as reservas se houver disponibilidade
 						if (podeReservar) {
-
 							for (Voo voo : voosOrdenados)
 								voo.addViajante(idUtilizador, data);
-
 							dataReserva = data;
 						}
+
 					} finally {
 						for (Voo voo : voosOrdenados)
 							voo.unlock(data);
 					}
 				}
 			}
+
+			if (dataReserva == null) return null;
+
+			viagensLock.lock();
+
 		} finally { voosRwLock.readLock().unlock(); }
 
-		if (dataReserva == null) return null;
-
-		return addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva);
+		//Regista a reserva da viagem
+		try { return addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
+		finally { viagensLock.unlock(); }
 
 	}
 
-	private void removeReserva(String idVoo, String idUtilizador, LocalDate data) {
+
+	/**
+	 * Remove a viagem e as reservas feitas em todos os voos que constituem a viagem.
+	 * @param idReserva Identificador da reserva da viagem
+	 * @return true se foi possível remover com sucesso todas as reservas;
+	 * false caso não exista uma viagem com o identificador de reserva fornecido
+	 */
+	public boolean removeReservasEViagem(String idUtilizador, int idReserva){
+		Viagem viagem;
+
+		try {
+			viagensLock.lock();
+
+			viagem = viagens.get(idReserva);
+
+			if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador) || isDayClosed(viagem.getData())) return false;
+
+			viagens.remove(idReserva);
+
+			voosRwLock.readLock().lock();
+		}finally { viagensLock.unlock(); }
+
+		try {
+			for(String idVoo : viagem.getColecaoVoos())
+				removeReserva(idVoo, idUtilizador, viagem.getData());
+		} finally { voosRwLock.readLock().unlock(); }
+
+		return true;
+	}
+
+	/**
+	 * Procura e devolve todos os voos possíveis.
+	 * @return lista com todos os voos possíveis.
+	 */
+	public List<List<String>> listaVoosExistentes(){
 		try {
 			voosRwLock.readLock().lock();
 
-			Voo voo = voos.get(idVoo);
+			List<List<String>> listaVoosExistentes = new ArrayList<>();
+			Set<String> setOrigens = grafoVoos.keySet(); //Set das origens dos voos
 
-			voo.removeViajante(idUtilizador, data);
+			for (String origem : setOrigens){
+				Map<String,Voo> voos = grafoVoos.get(origem);
 
-		} finally { voosRwLock.readLock().unlock(); }
+				if(voos == null) return null;
+
+				voos.keySet().forEach(destino -> listaVoosExistentes.add(new ArrayList<>(Arrays.asList(origem, destino))));
+			}
+
+			return listaVoosExistentes;
+
+		}finally { voosRwLock.readLock().unlock(); }
 	}
-
-	// ****** Métodos dos Grafos dos Voos ******
 
 	/**
 	 * Procura e devolve todas as viagens possíveis, com um máximo de duas escalas.
@@ -252,55 +308,6 @@ public class GestorDeDados {
 		}finally { voosRwLock.readLock().unlock(); }
 	}
 
-	// ****** Métodos das Viagens ******
-
-	/**
-	 * Adiciona uma reserva de viagem.
-	 * @param idUtilizador Identificador do utilizador que fez a reserva
-	 * @param voos Coleção dos identificadores dos voos que constituem a viagem
-	 * @param data Data na qual é suposto acontecer a viagem
-	 * @return o identificador da reserva da viagem
-	 */
-	public Integer addViagem(String idUtilizador, List<String> voos, LocalDate data){
-		try {
-			viagensLock.lock();
-
-			Viagem viagem = new Viagem(idUtilizador, voos, data);
-
-			Integer idReserva = viagem.getIdReserva();
-
-			viagens.put(idReserva, viagem);
-
-			return idReserva;
-		}finally { viagensLock.unlock(); }
-	}
-
-	/**
-	 * Remove a viagem e as reservas feitas em todos os voos que constituem a viagem.
-	 * @param idReserva Identificador da reserva da viagem
-	 * @return true se foi possível remover com sucesso todas as reservas;
-	 * false caso não exista uma viagem com o identificador de reserva fornecido
-	 */
-	public boolean removeReservasEViagem(String idUtilizador, int idReserva){
-		try {
-			viagensLock.lock();
-
-			Viagem viagem = viagens.get(idReserva);
-
-			if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador) || isDayClosed(viagem.getData())) return false;
-
-			viagens.remove(idReserva);
-
-			for(String idVoo : viagem.getColecaoVoos())
-				removeReserva(idVoo, idUtilizador, viagem.getData());
-
-		}finally { viagensLock.unlock(); }
-
-		return true;
-	}
-
-	// ****** Métodos dos Dias Encerrados ******
-
 	/**
 	 * Fecha um dia, não permitindo mais reservas de voos para esse dia.
 	 * @param date Data que se pretende fechar
@@ -323,9 +330,37 @@ public class GestorDeDados {
 			return diasEncerrados.contains(date);
 		} finally { diasEncerradosLock.unlock(); }
 	}
+	// ---------- Métodos Auxiliares Sem Locks ---------- //
 
+	/**
+	 * Remove a reserva de um determinado utilizador para um certo voo.
+	 * @param idVoo Identificador do voo no qual se pretende remover a reserva
+	 * @param idUtilizador Identificador do utilizador que pretende remover a reserva
+	 * @param data Data do voo em que se pretende cancelar a reserva
+	 * @warning Necessita do readLock dos voos.
+	 */
+	private void removeReserva(String idVoo, String idUtilizador, LocalDate data) {
+		Voo voo = voos.get(idVoo);
+		voo.removeViajante(idUtilizador, data);
+	}
 
-	// ****** Auxiliares ******
+	/**
+	 * Adiciona uma reserva de viagem.
+	 * @param idUtilizador Identificador do utilizador que fez a reserva
+	 * @param voos Coleção dos identificadores dos voos que constituem a viagem
+	 * @param data Data na qual é suposto acontecer a viagem
+	 * @return o identificador da reserva da viagem
+	 * @warning Necessita do lock das viagens
+	 */
+	public Integer addViagem(String idUtilizador, List<String> voos, LocalDate data) {
+		Viagem viagem = new Viagem(idUtilizador, voos, data);
+
+		Integer idReserva = viagem.getIdReserva();
+
+		viagens.put(idReserva, viagem);
+
+		return idReserva;
+	}
 
 	/**
 	 * Efetua pesquisa em profundidade, de todos os caminhos que chegam ao nodo final fornececido. A profundidade é limitada.
@@ -339,24 +374,23 @@ public class GestorDeDados {
 	 * @warning Necessita obtenção do ReadLock dos voos por parte da função chamadora.
 	 */
 	private void pesquisaTodosEmProfundidade(String nodoAtual, String nodoFinal, int depthAtual, int depthMax, List<List<String>> listaDeCaminhos, List<String> caminhoAtual) {
-		Set<Voo> l_voos = grafoVoos.get(nodoAtual); //Lista dos ids dos voos que partem do nodo inicial
+		Map<String,Voo> map_voos = grafoVoos.get(nodoAtual); //Map dos voos que partem do nodo atual
 
-		if (l_voos != null && !caminhoAtual.contains(nodoAtual)) {
+		if (map_voos != null && !caminhoAtual.contains(nodoAtual)) {
 			caminhoAtual = new ArrayList<>(caminhoAtual);
 			caminhoAtual.add(nodoAtual);
 
-			for (Voo voo : l_voos) {
-				String destinoVoo = voo.getDestino();
+			for (String destino : map_voos.keySet()) {
 
 				//Adiciona o caminho até o nodo Atual caso encontre o destino
-				if (destinoVoo.equals(nodoFinal)) {
+				if (destino.equals(nodoFinal)) {
 					List<String> novoCaminho = new ArrayList<>(caminhoAtual);
 					novoCaminho.add(nodoFinal);
 					listaDeCaminhos.add(novoCaminho);
 				}
 				//Se ainda não tiver encontrado o nodo final e não tiver atingido a profundidade máxima continua a procurar
 				else if (depthAtual < depthMax)
-					pesquisaTodosEmProfundidade(destinoVoo, nodoFinal, depthAtual + 1, depthMax, listaDeCaminhos, caminhoAtual);
+					pesquisaTodosEmProfundidade(destino, nodoFinal, depthAtual + 1, depthMax, listaDeCaminhos, caminhoAtual);
 			}
 		}
 	}
@@ -372,7 +406,7 @@ public class GestorDeDados {
 	 * @warning Necessita obtenção do ReadLock dos voos por parte da função chamadora.
 	 */
 	private void travessiaEmProfundidade(String nodoAtual, int depthAtual, int depthMax, List<List<String>> listaDeCaminhos, List<String> caminhoAtual) {
-		Set<Voo> l_voos = grafoVoos.get(nodoAtual);
+		Map<String,Voo> map_voos = grafoVoos.get(nodoAtual);
 
 		if(!caminhoAtual.contains(nodoAtual)) {
 			caminhoAtual = new ArrayList<>(caminhoAtual);
@@ -381,12 +415,10 @@ public class GestorDeDados {
 			if(caminhoAtual.size() > 1)
 				listaDeCaminhos.add(new ArrayList<>(caminhoAtual));
 
-			if (l_voos != null) {
-				for (Voo voo : l_voos) {
-					String destinoVoo = voo.getDestino();
+			if (map_voos != null) {
+				for (String destino : map_voos.keySet())
 					if (depthAtual <= depthMax)
-						travessiaEmProfundidade(destinoVoo, depthAtual + 1, depthMax, listaDeCaminhos, caminhoAtual);
-				}
+						travessiaEmProfundidade(destino, depthAtual + 1, depthMax, listaDeCaminhos, caminhoAtual);
 			}
 		}
 	}
@@ -396,32 +428,15 @@ public class GestorDeDados {
 	 * @param origem Nome da origem
 	 * @param destino Nome da destino
 	 * @return o voo se o encontrar, ou 'null' se não encontrar o voo.
+	 * @warning Necessita do readLock/writeLock dos voos
 	 */
 	private Voo encontraVoo(String origem, String destino) {
-		try {
-			voosRwLock.readLock().lock();
+		Map<String,Voo> voosDaOrigem = grafoVoos.get(origem);
 
-			TreeSet<Voo> voosDaOrigem = grafoVoos.get(origem);
-
-			if (voosDaOrigem != null) {
-				//TODO - tentar mudar isto. É feio mas é mais rápido do que procurar um a um numa lista
-				Voo voo = voosDaOrigem.floor(Voo.vooParaComparacao(destino));
-				if (voo != null && voo.getDestino().equals(destino))
-					return voo;
-			}
-
-			return null;
-
-		} finally { voosRwLock.readLock().unlock(); }
-	}
-
-	/*private Voo encontraVoo(String origem, String destino){
-		List<Voo> voosDaOrigem = grafoVoos.get(origem);
-
-		for (Voo voo : voosDaOrigem)
-			if(voo.getDestino().equals(destino))
-				return voo;
+		if (voosDaOrigem != null)
+			return voosDaOrigem.get(destino);
 
 		return null;
-	}*/
+	}
+
 }
