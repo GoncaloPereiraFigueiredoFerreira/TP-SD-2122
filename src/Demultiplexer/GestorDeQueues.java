@@ -1,12 +1,11 @@
-package Desmultiplexer;
+package Demultiplexer;
 
 import DataLayer.GestorDeDados;
-import Desmultiplexer.Operacoes.OperacaoI;
+import Demultiplexer.Operacoes.OperacaoI;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 public class GestorDeQueues {
     private Map<Integer,QueueOperacao> queues = new HashMap<>();

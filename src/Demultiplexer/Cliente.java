@@ -1,15 +1,22 @@
-package Desmultiplexer;
+package Demultiplexer;
 
-import Desmultiplexer.Exceptions.ServerIsClosedException;
+import DataLayer.Viagem;
+import Demultiplexer.Exceptions.ServerIsClosedException;
 
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Cliente {
+    private QueueDeReservas reservas= new QueueDeReservas();
+    private String utilizador;
+    private String password;
+    private boolean logado=false;
+
+
     private TaggedConnection connect() throws IOException {
         try {
             Socket s = new Socket("localhost", 8888);
@@ -21,7 +28,7 @@ public class Cliente {
     //Deviamos ter operaçao para saber quais as suas reservas
     //Deviamos retornar a data na reserva
 
-    public int confirmacao(Frame f,int opCode) throws IOException {
+    private int confirmacao(Frame f,int opCode) throws IOException {
         int rValue;
         if(f.getTag()!=opCode) rValue=-2;
         else {
@@ -45,7 +52,7 @@ public class Cliente {
         }
     }
 
-    public void sendDadosCriaConta(TaggedConnection tc,String username,String password,Boolean admin, int tag) throws IOException {
+    private void sendDadosCriaConta(TaggedConnection tc,String username,String password,Boolean admin, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -73,7 +80,7 @@ public class Cliente {
         }
     }
 
-    public void sendDadosLogin(TaggedConnection tc,String username,String password, int tag) throws IOException {
+    private void sendDadosLogin(TaggedConnection tc,String username,String password, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -95,13 +102,19 @@ public class Cliente {
             // Envia uma password e um username
             sendDadosLogin(tc,username,password,1);
             // Recebe uma confirmação de criação de conta
-            return confirmacao(tc.receive(), 1);  //0 significa que efetuou login de utilizador, 1 de admin  e -1 em caso de falha
+            int confirmacao = confirmacao(tc.receive(), 1);
+            if(confirmacao==0||confirmacao==1){
+                this.utilizador=username;
+                this.password=password;
+                this.logado=true;
+            }
+            return confirmacao;  //0 significa que efetuou login de utilizador, 1 de admin  e -1 em caso de falha
         } catch (IOException e) {
             return -2;
         }
     }
 
-    public void sendDadosAddVoo(TaggedConnection tc,String origem,String destino,int capacidade, int tag) throws IOException {
+    private void sendDadosAddVoo(TaggedConnection tc,String origem,String destino,int capacidade, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -129,11 +142,11 @@ public class Cliente {
         }
     }
 
-    public void sendDadosEncerraDia(TaggedConnection tc,String dia,int tag) throws IOException {
+    private void sendDadosEncerraDia(TaggedConnection tc,LocalDate dia,int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-        oos.writeUTF(dia);
+        oos.writeObject(dia);
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
@@ -143,7 +156,7 @@ public class Cliente {
         baos.close();
     }
 
-   public int encerraDia(String dia) throws ServerIsClosedException{ // tag 3
+   public int encerraDia(LocalDate dia) throws ServerIsClosedException{ // tag 3
        try {
            TaggedConnection tc= connect();
            if(tc==null) throw new ServerIsClosedException();
@@ -154,38 +167,120 @@ public class Cliente {
            return 1;
        }
    }
-/*
-    public static class Thread5 extends Thread{ //Unica thread necessária
-        String origem;
-        List<String> destinos;
-        LocalDate dInf;
-        LocalDate dSup;
-        public Thread5 (String origem, List<String> destinos, LocalDate dInf,LocalDate dSup){
-            this.origem = origem;
-            this.destinos = destinos;
+
+    private void sendDadosViagensEscalas(TaggedConnection tc,String origem,String destino,int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeUTF(origem);
+        oos.writeUTF(destino);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
+    public List<List<String>> listaViagensEscalas(String origem, String destino) throws ServerIsClosedException{ //tag 5
+        try {
+            TaggedConnection tc= connect();
+            if(tc==null) throw new ServerIsClosedException();
+
+            sendDadosViagensEscalas(tc,origem,destino,5);
+            Frame f = tc.receive();
+
+            List<List<String>> viagens= null;
+            if(f.getTag()==5) {
+                viagens = Viagens.deserialize(f.getData());
+            }
+            return viagens;  //se for null entao houve erro de conexão
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public int fazReserva(List<String> localizacoes, String dInf,String dSup) throws ServerIsClosedException{ //tag 5
+        try {
+            TaggedConnection tc= connect();
+            if(tc==null) throw new ServerIsClosedException();
+
+            FazReserva thread = new FazReserva(tc,localizacoes,dInf,dSup,6,this.reservas,this.utilizador,this.password);
+            thread.start();
+            return confirmacao(tc.receive(),6);  //0 significa que o dia foi fechado, 1 caso contrário
+        } catch (IOException e) {
+            return 1;
+        }
+    }
+
+    public static class FazReserva extends Thread{
+        TaggedConnection tc;
+        List<String> localizacoes;
+        String dInf;
+        String dSup;
+        String utilizador;
+        String password;
+        int tag;
+        QueueDeReservas reservas;
+
+        public FazReserva (TaggedConnection tc,List<String> localizacoes,
+                           String dInf,String dSup,int tag,QueueDeReservas reservas,String utilizador,String password){
+            this.tc = tc;
+            this.localizacoes = new ArrayList<>(localizacoes);
             this.dInf = dInf;
             this.dSup = dSup;
+            this.utilizador = utilizador;
+            this.password = password;
+            this.tag=tag;
+            this.reservas=reservas;
+        }
+
+        private void sendDadosReserva() throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+            oos.writeInt(localizacoes.size());
+            for (String s:localizacoes)
+                oos.writeUTF(s);
+            oos.writeUTF(utilizador);
+            oos.writeUTF(password);
+            oos.writeUTF(dInf);
+            oos.writeUTF(dSup);
+            oos.flush();
+
+            byte[] byteArray = baos.toByteArray();
+            tc.send(tag, byteArray);
+
+            oos.close();
+            baos.close();
         }
 
         @Override
         public void run(){
             // TODO:: THREAD DE RESERVA
-            String msg = "ola123";
             try {
             // Envia origem, lista de destinos, data inferior, data superior
-                tc.send(5,(msg).getBytes(StandardCharsets.UTF_8));
-                Thread.sleep(100);
-
+                sendDadosReserva();
             // Recebe o código da reserva (pelos vistos)
-                Frame frame = tc.receive();
-                System.out.println("(1) Reply: " + new String(frame.getData()));
+                Frame f = tc.receive();
+
+                ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
+                ObjectInputStream ois = new ObjectInputStream(bais);
+
+                Integer bemSucedido = ois.readInt();  //TODO tratar deste dado
+                Integer id = ois.readInt();
+
+                ois.close();
+                bais.close();
+                reservas.addReserva(id);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
-
+/*
     public static class Thread6 extends Thread{
         public Thread6 (){
         }
@@ -208,27 +303,7 @@ public class Cliente {
     }
 
 
-    public static class Thread7 extends Thread{
-        public Thread7 (){
-        }
-        @Override
-        public void run(){
-            // TODO:: THREAD DE LISTA Viagens
-            String msg = "ola123";
-            try {
-                // Apenas faz o pedido
-                tc.send(7,(msg).getBytes(StandardCharsets.UTF_8));
-                Thread.sleep(100);
 
-                // Recebe lista de viagens possíveis
-                Frame frame = tc.receive();
-                System.out.println("(1) Reply: " + new String(frame.getData()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
     public static class Thread8 extends Thread{
         String codReserva;

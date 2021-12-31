@@ -1,6 +1,6 @@
-package Desmultiplexer;
+package Demultiplexer;
 
-import Desmultiplexer.Operacoes.*;
+import Demultiplexer.Operacoes.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +14,9 @@ public class ServerTeste {
         operacoes.add(new AddVoo());
         operacoes.add(new Login());
         operacoes.add(new EncerraDia());
+        operacoes.add(new ListaViagensEscalas());
+        operacoes.add(new AdicionaReserva());
+
         if(!s.loadServer(operacoes)){
             System.out.println("Erro ao dar load ao servidor");
             return;

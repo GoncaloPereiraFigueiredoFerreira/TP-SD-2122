@@ -1,4 +1,4 @@
-package Desmultiplexer;
+package Demultiplexer;
 
 public class ConnectionPlusByteArray {
     private final byte[] bytes;

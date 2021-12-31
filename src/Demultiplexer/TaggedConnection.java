@@ -1,18 +1,17 @@
-package Desmultiplexer;
+package Demultiplexer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TaggedConnection implements AutoCloseable {
-    public Socket socket;
-    public DataOutputStream dos;
-    public DataInputStream dis;
-    public ReentrantLock rLock = new ReentrantLock();
-    public ReentrantLock wLock = new ReentrantLock();
+    private Socket socket;
+    private DataOutputStream dos;
+    private DataInputStream dis;
+    private ReentrantLock rLock = new ReentrantLock();
+    private ReentrantLock wLock = new ReentrantLock();
 
     public TaggedConnection(Socket socket) throws IOException {
         this.socket=socket;

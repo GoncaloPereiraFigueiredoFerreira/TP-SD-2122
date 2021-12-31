@@ -1,7 +1,7 @@
-package Desmultiplexer;
+package Demultiplexer;
 
 import DataLayer.GestorDeDados;
-import Desmultiplexer.Operacoes.OperacaoI;
+import Demultiplexer.Operacoes.OperacaoI;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

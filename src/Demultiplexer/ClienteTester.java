@@ -1,12 +1,9 @@
-package Desmultiplexer;
+package Demultiplexer;
 
-import Desmultiplexer.Exceptions.ServerIsClosedException;
+import Demultiplexer.Exceptions.ServerIsClosedException;
 
-import java.io.IOException;
-import java.net.Socket;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -83,16 +80,47 @@ public class ClienteTester {
 
                         MenuInput m = new MenuInput("Insira a data com o seguinte formato \"YYYY-MM-DD\":", "Data:");
                         m.executa();
-                        //Menu de datas
+
                         try {
-                            String opcao = m.getOpcao();
-                            LocalDate.parse(opcao);
+                            LocalDate opcao = LocalDate.parse(m.getOpcao());
                             flag = cliente.encerraDia(opcao);
                             if (flag == 0) System.out.println("Dia fechado com sucesso");
                             else if (flag == 1) System.out.println("Falha fechar o dia");
                         } catch (DateTimeParseException dtpe){
                             System.out.println("Inseriu uma data com o formato errado");
                         }
+                    }
+                    case 6 -> { //Listar viagens existentes
+
+                        MenuInput m1 = new MenuInput("Insira a origem da sua viagem:", "Origem:");
+                        MenuInput m2 = new MenuInput("Insira a destino da sua viagem:", "Destino:");
+                        m1.executa();
+                        m2.executa();
+                        //Menu de datas
+                        String origem = m1.getOpcao();
+                        String destino = m2.getOpcao();
+                        List<List<String>> viagens = cliente.listaViagensEscalas(origem,destino);
+                        if (viagens == null) System.out.println("Falha de conexao");
+                        else if (viagens.size() == 0) System.out.println("Nao existem viagens para estes destinos");
+                        else System.out.println(Viagens.toStringOutput(viagens,origem,destino));
+                    }
+                    case 7 -> { //Faz reserva
+
+                        MenuInput m1 = new MenuInput("Insira a data inferior com o seguinte formato \"YYYY-MM-DD\":", "Data:");
+                        MenuInput m2 = new MenuInput("Insira a data superior com o seguinte formato \"YYYY-MM-DD\":", "Data:");
+                        m1.executa();
+                        try {
+                            String dataInf = m1.getOpcao();
+                            LocalDate.parse(dataInf);
+                            m2.executa();
+
+
+                        } catch (DateTimeParseException dtpe){
+                            System.out.println("Inseriu a data inferior com o formato errado");
+                        }
+                        //MenuInput m2 = new MenuInput("Insira a destino da sua viagem:", "Destino:");
+                        m1.executa();
+                        m2.executa();
                     }
                  /*
                 case 5:

@@ -1,4 +1,4 @@
-package Desmultiplexer;
+package Demultiplexer;
 
 import java.util.Scanner;
 

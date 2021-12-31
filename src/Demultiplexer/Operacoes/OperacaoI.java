@@ -1,8 +1,8 @@
-package Desmultiplexer.Operacoes;
+package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Desmultiplexer.ConnectionPlusByteArray;
-import Desmultiplexer.TaggedConnection;
+import Demultiplexer.ConnectionPlusByteArray;
+import Demultiplexer.TaggedConnection;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

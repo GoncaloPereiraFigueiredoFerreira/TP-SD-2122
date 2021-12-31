@@ -1,23 +1,22 @@
-package Desmultiplexer.Operacoes;
+package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Desmultiplexer.ConnectionPlusByteArray;
-import Desmultiplexer.Frame;
-import Desmultiplexer.TaggedConnection;
+import Demultiplexer.ConnectionPlusByteArray;
+import Demultiplexer.TaggedConnection;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
-public class Login implements OperacaoI{
+public class AddVoo implements OperacaoI{
     byte[] bytes;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
-    int tag = 1;
+    int tag=2;
 
-    public Login(){}
+    public AddVoo(){}
 
-    public Login(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
+    public AddVoo(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
         this.bytes= cpba.getBytes();
         this.tc= cpba.getTg();
         this.gestorDeDados=gestorDeDados;
@@ -30,7 +29,7 @@ public class Login implements OperacaoI{
 
     @Override
     public void newRun(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new Login(cpba,gestorDeDados));
+        Thread t = new Thread(new AddVoo(cpba,gestorDeDados));
         t.start();
     }
 
@@ -39,15 +38,18 @@ public class Login implements OperacaoI{
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             ObjectInputStream ois = new ObjectInputStream(bais);
 
-            String username = ois.readUTF();
-            String password = ois.readUTF();
+            String origem = ois.readUTF();
+            String destino = ois.readUTF();
+            int capacidade = ois.readInt();
 
             ois.close();
             bais.close();
 
-            int logado = gestorDeDados.verificaCredenciais(username,password);
+            boolean adicionado = gestorDeDados.addVoo(origem,destino,capacidade);
+            if (adicionado)
+                sendConfirmacao(tc,0,tag); //Conta criada com sucesso
+            else sendConfirmacao(tc,1,tag); //Erro ao criar conta
 
-            sendConfirmacao(tc,logado,tag);
         } catch (IOException e) {
             e.printStackTrace();
         }
