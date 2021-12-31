@@ -1,4 +1,4 @@
-package Demultiplexer;
+package UI;
 
 import java.util.Arrays;
 import java.util.InputMismatchException;

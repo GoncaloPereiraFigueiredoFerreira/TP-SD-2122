@@ -63,4 +63,17 @@ public class Viagens{
 
         return sb.toString();
     }
+
+    public static String toStringOutput(List<List<String>> viagens) {
+        StringBuilder sb = new StringBuilder("Lista de voos possiveis \n");
+        for (List<String> list:viagens){
+            sb.append("Voo: ");
+            int i;
+            for (i=0;i<list.size()-1;i++){
+                sb.append(list.get(i)).append(" -> ");
+            }
+            sb.append(list.get(i)).append("\n");
+        }
+        return sb.toString();
+    }
 }

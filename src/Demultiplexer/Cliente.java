@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cliente {
-    private QueueDeReservas reservas= new QueueDeReservas();
+    private QueueDeReservas reservas = new QueueDeReservas();
     private String utilizador;
     private String password;
     private boolean logado=false;
@@ -168,6 +168,24 @@ public class Cliente {
        }
    }
 
+    public List<List<String>> listaVoosPossiveis() throws ServerIsClosedException{ //tag 4
+        try {
+            TaggedConnection tc= connect();
+            if(tc==null) throw new ServerIsClosedException();
+
+            tc.send(4,new byte[0]);
+            Frame f = tc.receive();
+
+            List<List<String>> viagens= null;
+            if(f.getTag()==4) {
+                viagens = Viagens.deserialize(f.getData());
+            }
+            return viagens;  //se for null entao houve erro de conexão
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     private void sendDadosViagensEscalas(TaggedConnection tc,String origem,String destino,int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
@@ -201,7 +219,7 @@ public class Cliente {
         }
     }
 
-    public int fazReserva(List<String> localizacoes, String dInf,String dSup) throws ServerIsClosedException{ //tag 5
+    public int fazReserva(List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
         try {
             TaggedConnection tc= connect();
             if(tc==null) throw new ServerIsClosedException();
@@ -217,15 +235,15 @@ public class Cliente {
     public static class FazReserva extends Thread{
         TaggedConnection tc;
         List<String> localizacoes;
-        String dInf;
-        String dSup;
+        LocalDate dInf;
+        LocalDate dSup;
         String utilizador;
         String password;
         int tag;
         QueueDeReservas reservas;
 
         public FazReserva (TaggedConnection tc,List<String> localizacoes,
-                           String dInf,String dSup,int tag,QueueDeReservas reservas,String utilizador,String password){
+                           LocalDate dInf,LocalDate dSup,int tag,QueueDeReservas reservas,String utilizador,String password){
             this.tc = tc;
             this.localizacoes = new ArrayList<>(localizacoes);
             this.dInf = dInf;
@@ -245,8 +263,8 @@ public class Cliente {
                 oos.writeUTF(s);
             oos.writeUTF(utilizador);
             oos.writeUTF(password);
-            oos.writeUTF(dInf);
-            oos.writeUTF(dSup);
+            oos.writeObject(dInf);
+            oos.writeObject(dSup);
             oos.flush();
 
             byte[] byteArray = baos.toByteArray();
@@ -258,7 +276,6 @@ public class Cliente {
 
         @Override
         public void run(){
-            // TODO:: THREAD DE RESERVA
             try {
             // Envia origem, lista de destinos, data inferior, data superior
                 sendDadosReserva();
@@ -268,18 +285,22 @@ public class Cliente {
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
                 ObjectInputStream ois = new ObjectInputStream(bais);
 
-                Integer bemSucedido = ois.readInt();  //TODO tratar deste dado
-                Integer id = ois.readInt();
+                int bemSucedido = ois.readInt();
+                int id = ois.readInt();
 
                 ois.close();
                 bais.close();
-                reservas.addReserva(id);
+
+                if(bemSucedido==0||bemSucedido==1) //Todo expandir bem sucedidos
+                    reservas.addReserva(id);
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
+
+
 /*
     public static class Thread6 extends Thread{
         public Thread6 (){

@@ -19,8 +19,9 @@ public class QueueDeReservas {
     public Deque<Integer> getReservas(){
         try {
             rl.lock();
-            return new LinkedList<>(queue);
+            return queue;
         }finally {
+            this.queue= new LinkedList<>();
             rl.unlock();
         }
     }

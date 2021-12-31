@@ -16,6 +16,7 @@ public class ServerTeste {
         operacoes.add(new EncerraDia());
         operacoes.add(new ListaViagensEscalas());
         operacoes.add(new AdicionaReserva());
+        operacoes.add(new ListaVoosPossiveis());
 
         if(!s.loadServer(operacoes)){
             System.out.println("Erro ao dar load ao servidor");

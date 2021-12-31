@@ -54,6 +54,7 @@ public class Voo implements Comparable<Voo> {
 	 */
 	public boolean addViajante(String idViajante, LocalDate data) {
 		Reservas rs;
+		//TODO - ver se este é um dos casos em que devemos fazer 2-fase locking, ou se isto continua correto
 
 		try {
 			RWlock.readLock().lock();
@@ -67,7 +68,6 @@ public class Voo implements Comparable<Voo> {
 				return false;
 		}
 
-		//TODO - ver se este é um dos casos em que devemos fazer 2-fase locking, ou se isto continua correto
 		return rs.addViajante(idViajante,capacidade);
 	}
 

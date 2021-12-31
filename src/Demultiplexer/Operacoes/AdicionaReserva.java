@@ -1,5 +1,7 @@
 package Demultiplexer.Operacoes;
 
+import DataLayer.Exceptions.localizacoesInvalidasException;
+import DataLayer.Exceptions.numeroLocalizacoesInvalidoException;
 import DataLayer.GestorDeDados;
 import Demultiplexer.ConnectionPlusByteArray;
 import Demultiplexer.TaggedConnection;
@@ -40,28 +42,37 @@ public class AdicionaReserva implements OperacaoI{
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
             ObjectInputStream ois = new ObjectInputStream(bais);
 
+            //TODO - Dá fix a isto
+            int nrLocalizacoes = ois.readInt();
+
             List<String> localizacoes = new ArrayList<>();
-            for (int i=0;i< ois.readInt();i++){
+            for (int i=0;i< nrLocalizacoes;i++){
                 localizacoes.add(ois.readUTF());
             }
             String utilizador = ois.readUTF();
             String password = ois.readUTF();
-            String dInf = ois.readUTF();
-            String dSup = ois.readUTF();
+            LocalDate dInf = (LocalDate) ois.readObject();
+            LocalDate dSup = (LocalDate) ois.readObject();
 
             ois.close();
             bais.close();
 
-            int login = gestorDeDados.verificaCredenciais(utilizador,password);
+            int sucesso = gestorDeDados.verificaCredenciais(utilizador,password);
             int id=0;
-            if(login==0||login==1) {
-                id = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, LocalDate.parse(dInf), LocalDate.parse(dSup));
+            if(sucesso==0||sucesso==1) {
+                try {
+                    id = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
+                }catch (localizacoesInvalidasException e) {
+                    sucesso=2;
+                }catch (numeroLocalizacoesInvalidoException e) {
+                    sucesso=3;
+                }
             }
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            oos.writeInt(login); //todo verificar as exceptions
+            oos.writeInt(sucesso); //sucesso -> -1 login errado, 0||1 login correto, 2 localizacoes invalidas, 3 numero de localizacoes invalidas
             oos.writeInt(id);
 
             byte[] byteArray = baos.toByteArray();
@@ -70,7 +81,7 @@ public class AdicionaReserva implements OperacaoI{
             oos.close();
             baos.close();
 
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

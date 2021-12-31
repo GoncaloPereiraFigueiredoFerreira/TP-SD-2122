@@ -1,6 +1,7 @@
 package Demultiplexer;
 
 import Demultiplexer.Exceptions.ServerIsClosedException;
+import UI.MenuInput;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -104,17 +105,33 @@ public class ClienteTester {
                         else if (viagens.size() == 0) System.out.println("Nao existem viagens para estes destinos");
                         else System.out.println(Viagens.toStringOutput(viagens,origem,destino));
                     }
-                    case 7 -> { //Faz reserva
+                    case 7 -> { //Listar voos possiveis
+                        System.out.println("A carregar voos possiveis");
+
+                        List<List<String>> viagens = cliente.listaVoosPossiveis();
+
+                        if (viagens == null) System.out.println("Falha de conexao");
+                        else if (viagens.size() == 0) System.out.println("Nao existem voos possiveis");
+                        else System.out.println(Viagens.toStringOutput(viagens));
+                    }
+                    case 8 -> { //Faz reserva
 
                         MenuInput m1 = new MenuInput("Insira a data inferior com o seguinte formato \"YYYY-MM-DD\":", "Data:");
                         MenuInput m2 = new MenuInput("Insira a data superior com o seguinte formato \"YYYY-MM-DD\":", "Data:");
+                        MenuInput m3 = new MenuInput("Insira a origem da sua viagem:", "Origem:"); //todo alterar localizacoes
                         m1.executa();
                         try {
-                            String dataInf = m1.getOpcao();
-                            LocalDate.parse(dataInf);
+                            LocalDate.parse(m1.getOpcao());
                             m2.executa();
+                            try {
+                                LocalDate.parse(m2.getOpcao());
 
+                                m3.executa();
+                                String origem = m3.getOpcao();
 
+                            }catch (DateTimeParseException dtpe) {
+                                System.out.println("Inseriu a data superior com o formato errado");
+                            }
                         } catch (DateTimeParseException dtpe){
                             System.out.println("Inseriu a data inferior com o formato errado");
                         }

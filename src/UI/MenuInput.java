@@ -1,4 +1,4 @@
-package Demultiplexer;
+package UI;
 
 import java.util.Scanner;
 
@@ -10,7 +10,7 @@ public class MenuInput {
 
     public MenuInput(String title,String text){
         this.title = title;
-        this.text =text;
+        this.text = text;
         this.op = "";
     }
 
@@ -21,8 +21,8 @@ public class MenuInput {
 
 
     private void showMenu() {
-        if (title != null)  System.out.println(title);
-        //System.out.println(text);
+        if (title != null) System.out.println(title);
+        if (text != null)  System.out.print(text);
     }
 
     private String lerOpcao() {
@@ -34,8 +34,8 @@ public class MenuInput {
 
         return op;
     }
+
     public String getOpcao() {
         return this.op;
     }
-
 }
