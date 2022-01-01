@@ -6,11 +6,15 @@ import Demultiplexer.Exceptions.ServerIsClosedException;
 import Demultiplexer.TaggedConnection;
 import Demultiplexer.Viagens;
 
+import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MainCliente {
@@ -38,41 +42,50 @@ public class MainCliente {
         public void setValue(Integer flag){ try{ lock.lock(); this.flag = flag; } finally{ lock.unlock();} }
     }
 
+
     public static void main(String[] args) {
-        Flag flag       = new Flag();
-        Cliente cliente = new Cliente();
+        Socket s;
+        Demultiplexer m;
 
         try {
-            Socket s        = new Socket("localhost", 12345);
+            s = new Socket("localhost", 12345);
             s.setSoTimeout(100);
-            Demultiplexer m = new Demultiplexer(new TaggedConnection(s));
-        }catch (Exception e){
-            //TODO
+            m = new Demultiplexer(new TaggedConnection(s));
+        }catch (UnknownHostException uhe){
+            System.out.println("Servidor offline.");
+            return;
+        }catch (IOException ioe){
+            System.out.println("Problema com o socket utilizado para a conexão.");
+            return;
         }
+
+        Flag flag              = new Flag();
+        Cliente cliente        = new Cliente(m);
+        AtomicInteger nrPedido = new AtomicInteger(0);
 
         //Menu de autenticacao
         Menu menuAutenticaco = new Menu("Menu de autenticacao", new String[]{"Registar cliente", "Registar adminstrador", "Autenticar"});
         menuAutenticaco.setHandlerSaida(() -> flag.setValue(Flag.CLOSE_CLIENT));
-        menuAutenticaco.setHandler(1, () -> registarClienteHandler(flag, cliente));
-        menuAutenticaco.setHandler(2, () -> registarAdminHandler(flag, cliente));
-        menuAutenticaco.setHandler(3, () -> autenticarHandler(flag, cliente));
+        menuAutenticaco.setHandler(1, () -> registarClienteHandler(nrPedido, flag, cliente));
+        menuAutenticaco.setHandler(2, () -> registarAdminHandler(nrPedido, flag, cliente));
+        menuAutenticaco.setHandler(3, () -> autenticarHandler(nrPedido, flag, cliente));
 
         //Menu de cliente
         Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino"});
         menuCliente.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
-        menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente));
-        menuCliente.setHandler(2, () -> cancelarReservaHandler(flag, cliente));
-        menuCliente.setHandler(3, () -> listarVoosHandler(flag, cliente));
+        menuCliente.setHandler(1, () -> reservarViagemHandler(nrPedido, flag, cliente));
+        menuCliente.setHandler(2, () -> cancelarReservaHandler(nrPedido, flag, cliente));
+        menuCliente.setHandler(3, () -> listarVoosHandler(nrPedido, flag, cliente));
         //TODO - falta handler 4
-        menuCliente.setHandler(5, () -> listarViagensRestritasHandler(flag, cliente));
+        menuCliente.setHandler(5, () -> listarViagensRestritasHandler(nrPedido, flag, cliente));
 
         //Menu de administrador
         Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operacões de Cliente", "Inserir Novo Voo", "Encerrar um Dia","Fechar servidor"});
         menuAdmin.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
         menuAdmin.setHandler(1, menuCliente::run);
-        menuAdmin.setHandler(2, () -> inserirNovoVooHandler(flag, cliente));
-        menuAdmin.setHandler(3, () -> encerrarDiaHandler(flag,cliente));
-        menuAdmin.setHandler(4, () -> fecharServidorHandler(flag,cliente));
+        menuAdmin.setHandler(2, () -> inserirNovoVooHandler(nrPedido, flag, cliente));
+        menuAdmin.setHandler(3, () -> encerrarDiaHandler(nrPedido, flag,cliente));
+        menuAdmin.setHandler(4, () -> fecharServidorHandler(nrPedido, flag,cliente));
 
         while (!flag.getValue().equals(Flag.CLOSE_CLIENT)) {
 
@@ -94,14 +107,17 @@ public class MainCliente {
 
     // ****** Handlers Autenticacao ****** //
 
-    private static void registarClienteHandler(Flag flag, Cliente cliente){
+    private static void registarClienteHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente){
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m1 = new MenuInput("Insira um username", "Username:");
         MenuInput m2 = new MenuInput("Insira uma password", "Password:");
         m1.executa();
         m2.executa();
 
         try {
-            int flagInterna = cliente.criaConta(m1.getOpcao(), m2.getOpcao(), false);
+            int flagInterna = cliente.criaConta(nr, m1.getOpcao(), m2.getOpcao(), false);
             if (flagInterna == 0) System.out.println("Cliente criado com sucesso");
             else if (flagInterna == 1) System.out.println("Falha ao criar cliente");
         } catch (ServerIsClosedException sice) {
@@ -109,14 +125,17 @@ public class MainCliente {
         }
     }
 
-    private static void registarAdminHandler(Flag flag, Cliente cliente) {
+    private static void registarAdminHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m1 = new MenuInput("Insira um username:", "Username:");
         MenuInput m2 = new MenuInput("Insira uma password:", "Password:");
         m1.executa();
         m2.executa();
 
         try {
-            int flagInterna = cliente.criaConta(m1.getOpcao(), m2.getOpcao(),true);
+            int flagInterna = cliente.criaConta(nr, m1.getOpcao(), m2.getOpcao(),true);
             if (flagInterna == 0) System.out.println("Aministrador criado com sucesso");
             else if (flagInterna == 1) System.out.println("Falha ao criar administrador");
         } catch (ServerIsClosedException sice) {
@@ -124,14 +143,17 @@ public class MainCliente {
         }
     }
 
-    private static void autenticarHandler(Flag flag, Cliente cliente) {
+    private static void autenticarHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m1 = new MenuInput("Insira o seu username:", "Username:");
         MenuInput m2 = new MenuInput("Insira o seu password:", "Password:");
         m1.executa();
         m2.executa();
 
         try {
-            int flagInterna = cliente.login(m1.getOpcao(), m2.getOpcao());
+            int flagInterna = cliente.login(nr, m1.getOpcao(), m2.getOpcao());
             if (flagInterna == -1) System.out.println("Falha no login");
             else if (flagInterna == 0) {
                 System.out.println("Cliente logado com sucesso");
@@ -148,7 +170,10 @@ public class MainCliente {
 
     // ****** Handlers Cliente ****** //
 
-    private static void reservarViagemHandler(Flag flag, Cliente cliente) {
+    private static void reservarViagemHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m  = new MenuInput("Insira o numero de localizacões que pretende inserir:","Numero: ");
         MenuInput m1 = new MenuInput("Insira uma localizacao:", "Localizacao:" ); //todo alterar localizacoes
         MenuInput m2 = new MenuInput("Insira a data inicial (com o formato \"YYYY-MM-DD\"):", "Data: ");
@@ -199,16 +224,19 @@ public class MainCliente {
         final LocalDate dataFinalF   = dataFinal;
         new Thread(() -> {
             try {
-                cliente.fazReserva(locais, dataInicialF, dataFinalF);
+                cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
             }catch (ServerIsClosedException sice){
                 flag.setValue(Flag.SERVER_CLOSED);
             }
         }).start();
     }
 
-    private static void cancelarReservaHandler(Flag flag, Cliente cliente) {
+    private static void cancelarReservaHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m = new MenuInput("Insira o id da sua reserva", "ID:");
-        //Menu de datas
+
         Integer idReserva=null;
 
         while (idReserva==null) {
@@ -221,7 +249,7 @@ public class MainCliente {
         }
 
         try {
-            int flagInterna = cliente.cancelaReserva(idReserva);
+            int flagInterna = cliente.cancelaReserva(nr, idReserva);
             if (flagInterna == 0) System.out.println("Reserva removida");
             else if (flagInterna == 1) System.out.println("ID da reserva nao foi encontrado");
             else if (flagInterna == 2) System.out.println("Falha de seguranca, tente sair da conta e voltar a fazer login");
@@ -230,11 +258,14 @@ public class MainCliente {
         }
     }
 
-    private static void listarVoosHandler(Flag flag, Cliente cliente) {
+    private static void listarVoosHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         System.out.println("A carregar voos possiveis");
 
         try {
-            List<List<String>> viagens = cliente.listaVoosPossiveis();
+            List<List<String>> viagens = cliente.listaVoosPossiveis(nr);
 
             if (viagens == null) System.out.println("Falha de conexao");
             else if (viagens.size() == 0) System.out.println("Nao existem voos possiveis");
@@ -247,7 +278,10 @@ public class MainCliente {
 
     //TODO - falta handler 4
 
-    private static void listarViagensRestritasHandler(Flag flag, Cliente cliente) {
+    private static void listarViagensRestritasHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m1 = new MenuInput("Insira a origem da sua viagem:", "Origem:");
         MenuInput m2 = new MenuInput("Insira a destino da sua viagem:", "Destino:");
         m1.executa();
@@ -257,7 +291,7 @@ public class MainCliente {
         String destino = m2.getOpcao();
 
         try {
-            List<List<String>> viagens = cliente.listaViagensEscalas(origem, destino);
+            List<List<String>> viagens = cliente.listaViagensEscalas(nr, origem, destino);
             if (viagens == null) System.out.println("Falha de conexao");
             else if (viagens.size() == 0) System.out.println("Nao existem viagens para estes destinos");
             else System.out.println(Viagens.toStringOutput(viagens, origem, destino));
@@ -268,7 +302,10 @@ public class MainCliente {
 
     // ****** Handlers Admin ****** //
 
-    private static void inserirNovoVooHandler(Flag flag, Cliente cliente) {
+    private static void inserirNovoVooHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m1 = new MenuInput("Insira a origem:", "Origem:");
         MenuInput m2 = new MenuInput("Insira o destino:", "Destino:");
         MenuInput m3 = new MenuInput("Insira a capacidade:", "Capacidade:");
@@ -288,7 +325,7 @@ public class MainCliente {
         } while (dummyflag);
 
         try {
-            int flagInterna = cliente.addVoo(m1.getOpcao(), m2.getOpcao(), n);
+            int flagInterna = cliente.addVoo(nr, m1.getOpcao(), m2.getOpcao(), n);
             if (flagInterna == 0) System.out.println("Voo adicionado com sucesso");
             else if (flagInterna == 1) System.out.println("Falha ao adicionar voo");
         } catch (ServerIsClosedException sice) {
@@ -297,7 +334,10 @@ public class MainCliente {
 
     }
 
-    private static void encerrarDiaHandler(Flag flag, Cliente cliente) {
+    private static void encerrarDiaHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
         MenuInput m = new MenuInput("Insira a data com o seguinte formato \"YYYY-MM-DD\":", "Data:");
         m.executa();
 
@@ -312,7 +352,7 @@ public class MainCliente {
                 }
             }
 
-            int flagInterna = cliente.encerraDia(opcao);
+            int flagInterna = cliente.encerraDia(nr, opcao);
             if (flagInterna == 0) System.out.println("Dia fechado com sucesso");
             else if (flagInterna == 1) System.out.println("Falha fechar o dia");
 
@@ -321,8 +361,11 @@ public class MainCliente {
         }
     }
 
-    private static void fecharServidorHandler(Flag flag, Cliente cliente) {
-        try { cliente.fecharServidor(); }
+    private static void fecharServidorHandler(AtomicInteger nrPedido, Flag flag, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
+        try { cliente.fecharServidor(nr); }
         catch (ServerIsClosedException sice){ flag.setValue(Flag.SERVER_CLOSED); }
     }
 }

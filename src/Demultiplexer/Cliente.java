@@ -11,48 +11,39 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Cliente {
-    private QueueDeReservas reservas = new QueueDeReservas();
+    private Demultiplexer m;
     private String utilizador;
     private String password;
-    private boolean logado=false;
+    private boolean logado = false;
 
+    public Cliente(Demultiplexer m){ this.m = m; }
 
-    private TaggedConnection connect() throws IOException {
-        try {
-            Socket s = new Socket("localhost", 8888);
-            return new TaggedConnection(s);
-        } catch (ConnectException ce) {
-            return null;
-        }
-    }
     //Deviamos ter operaçao para saber quais as suas reservas
     //Deviamos retornar a data na reserva
 
-    private int confirmacao(Frame f,int opCode) throws IOException {
+    private int confirmacao(Frame f) throws IOException {
         int rValue;
-        if(f.getTag()!=opCode) rValue=-2;
-        else {
-            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            rValue = ois.readInt();
-            ois.close();
-            bais.close();
-        }
+
+        ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
+        ObjectInputStream ois = new ObjectInputStream(bais);
+        rValue = ois.readInt();
+        ois.close();
+        bais.close();
+
         return rValue;
     }
 
-    public void fecharServidor() throws ServerIsClosedException { //tag -1 //todo mudar void para boolean
+    //TODO - ver situacao de ServerIsClosedException
+    public void fecharServidor(int number) throws ServerIsClosedException { //tag -1 //todo mudar void para boolean
         try {
-            TaggedConnection tc = connect();
-            if(tc==null) throw new ServerIsClosedException();
             // Envia tag -1 para sinalizar fecho
-            tc.send(-1, new byte[0]);
+            m.send(number, -1, new byte[0], true);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void sendDadosCriaConta(TaggedConnection tc,String username,String password,Boolean admin, int tag) throws IOException {
+    private void sendDadosCriaConta(int number, String username, String password, Boolean admin, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -62,25 +53,26 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public int criaConta(String username,String password,Boolean administrador) throws ServerIsClosedException{ //tag 0
+    //TODO - ver situacao de ServerIsClosedException
+    public int criaConta(int number, String username,String password,Boolean administrador) throws ServerIsClosedException{ //tag 0
         try {
-            TaggedConnection tc = connect();
-            if(tc==null) throw new ServerIsClosedException();
             // Recebe uma confirmação de criação de conta
-            sendDadosCriaConta(tc,username,password,administrador,0);
-            return confirmacao(tc.receive(),0);
+            sendDadosCriaConta(number,username,password,administrador,0);
+            int confirm = confirmacao(m.receive(number));
+            m.finishedReceivingMessages(number);
+            return confirm;
         } catch (IOException e) {
             return -2;
         }
     }
 
-    private void sendDadosLogin(TaggedConnection tc,String username,String password, int tag) throws IOException {
+    private void sendDadosLogin(int number, String username,String password, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -89,20 +81,20 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public int login(String username,String password) throws ServerIsClosedException{ //tag 1
+    //TODO - ver situacao de ServerIsClosedException
+    public int login(int number, String username,String password) throws ServerIsClosedException{ //tag 1
         try {
-            TaggedConnection tc = connect();
-            if(tc==null) throw new ServerIsClosedException();
             // Envia uma password e um username
-            sendDadosLogin(tc,username,password,1);
+            sendDadosLogin(number,username,password,1);
             // Recebe uma confirmação de criação de conta
-            int confirmacao = confirmacao(tc.receive(), 1);
+            int confirmacao = confirmacao(m.receive(number));
+            m.finishedReceivingMessages(number);
             if(confirmacao==0||confirmacao==1){
                 this.utilizador=username;
                 this.password=password;
@@ -114,7 +106,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosAddVoo(TaggedConnection tc,String origem,String destino,int capacidade, int tag) throws IOException {
+    private void sendDadosAddVoo(int number, String origem,String destino,int capacidade, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -124,25 +116,26 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public int addVoo(String origem,String destino,int capacidade) throws ServerIsClosedException{ // tag 2
+    //TODO - ver situacao de ServerIsClosedException
+    public int addVoo(int number, String origem,String destino,int capacidade) throws ServerIsClosedException{ // tag 2
         try {
-            TaggedConnection tc= connect();
-            if(tc==null) throw new ServerIsClosedException();
             // Envia uma origem destino e capacidade
-            sendDadosAddVoo(tc,origem,destino,capacidade,2);
-            return confirmacao(tc.receive(),2);  //0 significa que o voo foi criado, 1 caso contrário
+            sendDadosAddVoo(number,origem,destino,capacidade,2);
+            int confirmacao = confirmacao(m.receive(number));  //0 significa que o voo foi criado, 1 caso contrário
+            m.finishedReceivingMessages(number);
+            return confirmacao;
         } catch (IOException e) {
             return 1;
         }
     }
 
-    private void sendDadosEncerraDia(TaggedConnection tc,LocalDate dia,int tag) throws IOException {
+    private void sendDadosEncerraDia(int number, LocalDate dia,int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -150,31 +143,30 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-   public int encerraDia(LocalDate dia) throws ServerIsClosedException{ // tag 3
+    //TODO - ver situacao de ServerIsClosedException
+   public int encerraDia(int number, LocalDate dia) throws ServerIsClosedException{ // tag 3
        try {
-           TaggedConnection tc= connect();
-           if(tc==null) throw new ServerIsClosedException();
-
-           sendDadosEncerraDia(tc,dia,3);
-           return confirmacao(tc.receive(),3);  //0 significa que o dia foi fechado, 1 caso contrário
+           sendDadosEncerraDia(number,dia,3);
+           int confirmacao = confirmacao(m.receive(number));  //0 significa que o dia foi fechado, 1 caso contrário
+           m.finishedReceivingMessages(number);
+           return confirmacao;
        } catch (IOException e) {
            return 1;
        }
    }
 
-    public List<List<String>> listaVoosPossiveis() throws ServerIsClosedException{ //tag 4
+    //TODO - ver situacao de ServerIsClosedException
+    public List<List<String>> listaVoosPossiveis(int number) throws ServerIsClosedException{ //tag 4
         try {
-            TaggedConnection tc= connect();
-            if(tc==null) throw new ServerIsClosedException();
-
-            tc.send(4,new byte[0]);
-            Frame f = tc.receive();
+            m.send(number, 4, new byte[0], false);
+            Frame f = m.receive(number);
+            m.finishedReceivingMessages(number);
 
             List<List<String>> viagens= null;
             if(f.getTag()==4) {
@@ -186,7 +178,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosViagensEscalas(TaggedConnection tc,String origem,String destino,int tag) throws IOException {
+    private void sendDadosViagensEscalas(int number, String origem, String destino, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -195,19 +187,18 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public List<List<String>> listaViagensEscalas(String origem, String destino) throws ServerIsClosedException{ //tag 5
+    //TODO - ver situacao de ServerIsClosedException
+    public List<List<String>> listaViagensEscalas(int number, String origem, String destino) throws ServerIsClosedException{ //tag 5
         try {
-            TaggedConnection tc= connect();
-            if(tc==null) throw new ServerIsClosedException();
-
-            sendDadosViagensEscalas(tc,origem,destino,5);
-            Frame f = tc.receive();
+            sendDadosViagensEscalas(number,origem,destino,5);
+            Frame f = m.receive(number);
+            m.finishedReceivingMessages(number);
 
             List<List<String>> viagens= null;
             if(f.getTag()==5) {
@@ -219,7 +210,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosReserva(TaggedConnection tc,List<String> localizacoes, LocalDate dInf,LocalDate dSup,int tag) throws IOException {
+    private void sendDadosReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup,int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -233,21 +224,20 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public void fazReserva(List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
+    //TODO - ver situacao de ServerIsClosedException
+    public void fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
         try {
-            TaggedConnection tc= connect();
-            if(tc==null) throw new ServerIsClosedException();
-
-            sendDadosReserva(tc,localizacoes,dInf,dSup,6);
+            sendDadosReserva(number,localizacoes,dInf,dSup,6);
 
             try {
-                Frame f = tc.receive();
+                Frame f = m.receive(number);
+                m.finishedReceivingMessages(number);
 
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
                 ObjectInputStream ois = new ObjectInputStream(bais);
@@ -273,7 +263,7 @@ public class Cliente {
         } catch (IOException e) {} //todo
     }
 
-    private void sendDadosCancelaReserva(TaggedConnection tc,Integer idReserva,int tag) throws IOException {
+    private void sendDadosCancelaReserva(int number, Integer idReserva, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -283,20 +273,19 @@ public class Cliente {
         oos.flush();
 
         byte[] byteArray = baos.toByteArray();
-        tc.send(tag, byteArray);
+        m.send(number, tag, byteArray, false);
 
         oos.close();
         baos.close();
     }
 
-    public int cancelaReserva(Integer idReserva) throws ServerIsClosedException{ //tag 7
+    //TODO - ver situacao de ServerIsClosedException
+    public int cancelaReserva(int number, Integer idReserva) throws ServerIsClosedException{ //tag 7
         try {
-            TaggedConnection tc= connect();
-            if(tc==null) throw new ServerIsClosedException();
-
-            sendDadosCancelaReserva(tc,idReserva,7);
-
-            return confirmacao(tc.receive(),7);  //0 significa que a reserva foi removida, 1 id nao existe, 2 falha de segurança
+            sendDadosCancelaReserva(number, idReserva, 7);
+            int confirmacao = confirmacao(m.receive(number));  //0 significa que a reserva foi removida, 1 id nao existe, 2 falha de segurança
+            m.finishedReceivingMessages(number);
+            return confirmacao;
         } catch (IOException e) {
             return 1;
         }
