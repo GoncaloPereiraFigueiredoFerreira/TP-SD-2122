@@ -30,13 +30,12 @@ public class Server extends Thread {
         } else return false;
     }
 
-    public boolean addPedido(TaggedConnection tg) throws IOException {
-        Frame f = tg.receive();
+    public boolean addPedido(TaggedConnection tg,Frame f) throws IOException {
         int tag = f.getTag();
         if(tag!=-1) {  // if tag == -1 then close
             OperacaoI operacao = gestorDeOperacoes.get(f.getTag());
             if(operacao!=null)
-                operacao.newRun(new ConnectionPlusByteArray(f.getData(),tg),gestorDeDados);
+                operacao.newRun(tg,f,gestorDeDados);
             return true;
         }
         else {
@@ -60,15 +59,13 @@ public class Server extends Thread {
                             Frame frame = c.receive();
                             if(frame.getTag()==-1)
                                 running.set(false);
-                            int number  = frame.getNumber();
-                            int tag     = frame.getTag();
-                            String data = new String(frame.getData());
-                            addPedido(c);
+                            addPedido(c,frame);
                         }
-                    } catch (Exception ignored) { }
+                    } catch (IOException ignored) { }
                 };
-                new Thread(worker).start(); //todo servidor depois de pedido de fecho espera pelos workers
+                new Thread(worker).start();
             }
+            ss.close();
 
         } catch (IOException e) {
                 e.printStackTrace();

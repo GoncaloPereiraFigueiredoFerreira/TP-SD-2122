@@ -1,7 +1,7 @@
 package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.ConnectionPlusByteArray;
+import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 import Demultiplexer.Viagens;
 
@@ -13,16 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListaViagensEscalas implements OperacaoI{
-    byte[] bytes;
+    Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
     int tag=5;
 
     public ListaViagensEscalas(){}
 
-    public ListaViagensEscalas(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados){
-        this.bytes= cpba.getBytes();
-        this.tc= cpba.getTg();
+    public ListaViagensEscalas(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados){
+        this.f= f;
+        this.tc= tc;
         this.gestorDeDados=gestorDeDados;
     }
 
@@ -32,14 +32,14 @@ public class ListaViagensEscalas implements OperacaoI{
     }
 
     @Override
-    public void newRun(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new ListaViagensEscalas(cpba,gestorDeDados));
+    public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
+        Thread t = new Thread(new ListaViagensEscalas(tc,f,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
 
             String origem = ois.readUTF();
@@ -50,7 +50,7 @@ public class ListaViagensEscalas implements OperacaoI{
 
             List<List<String>> viagens = gestorDeDados.listaViagensExistentes(origem,destino);
 
-            tc.send(tag,(Viagens.serialize(viagens)));
+            tc.send(tag,f.getNumber(),(Viagens.serialize(viagens)));
         } catch (IOException e) {
             e.printStackTrace();
         }
