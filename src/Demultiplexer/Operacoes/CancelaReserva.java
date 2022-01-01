@@ -46,7 +46,7 @@ public class CancelaReserva implements OperacaoI{
             int logado = gestorDeDados.verificaCredenciais(utilizador,password);
             boolean adicionado=false;
             if (logado==1||logado==0)
-                adicionado = gestorDeDados.removeReservasEViagem(utilizador,idReserva); //todo
+                adicionado = gestorDeDados.removeReservasEViagem(utilizador,idReserva);
 
             if (adicionado)
                 sendConfirmacao(tc,0,tag,f.getNumber()); //Removido

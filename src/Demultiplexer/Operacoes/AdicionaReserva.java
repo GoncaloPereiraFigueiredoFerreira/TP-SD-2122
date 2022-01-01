@@ -42,7 +42,6 @@ public class AdicionaReserva implements OperacaoI{
             ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
 
-            //TODO - Dá fix a isto
             int nrLocalizacoes = ois.readInt();
 
             List<String> localizacoes = new ArrayList<>();

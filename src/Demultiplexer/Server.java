@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Server extends Thread {
     private static final int WORKERS_PER_CONNECTION = 100;
     private Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
-    private GestorDeDados gestorDeDados= new GestorDeDados(); //todo contrutor de server com opcao de dar load
+    private GestorDeDados gestorDeDados= new GestorDeDados();
 
 
     public boolean operationListIsValid(List<OperacaoI> operacoes){
