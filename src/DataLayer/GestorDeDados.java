@@ -209,7 +209,6 @@ public class GestorDeDados {
 
 		} finally { voosRwLock.readLock().unlock(); }
 
-		System.out.println("----------------------------------------------------- Adicionei viagem ------------------------------------------------------");
 		//Regista a reserva da viagem
 		try { return addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
 		finally { viagensLock.unlock(); }

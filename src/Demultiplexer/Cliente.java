@@ -237,11 +237,11 @@ public class Cliente {
                     if (bemSucedido == 0 || bemSucedido == 1) //Todo expandir bem sucedidos
                         System.out.println("ID da reserva: " + id);
                     else if (bemSucedido == 2)
-                        System.out.println("Localizacoes inseridas são inválidas");
+                        System.out.println("Localizacoes inseridas são inválidas.");
                     else if (bemSucedido == 3)
-                        System.out.println("Numero de localizacoes inserido é invalido");
+                        System.out.println("Numero de localizacoes inserido é invalido.");
                     else if (bemSucedido == 4)
-                        System.out.println("Utilizador ja possui uma reserva para este dia");
+                        System.out.println("Utilizador ja possui uma reserva para este dia ou nao existem lugares disponiveis.");
                     else System.out.println("Error");
                 }
             } catch (Exception e) {
@@ -292,76 +292,5 @@ public class Cliente {
             return null;
         }
     }
-
-/*
-    public static class Thread6 extends Thread{
-        public Thread6 (){
-        }
-        @Override
-        public void run(){
-            // TODO:: THREAD DE LISTA VOOS
-            String msg = "ola123";
-            try {
-            // Apenas faz o pedido
-            tc.send(6,(msg).getBytes(StandardCharsets.UTF_8));
-            Thread.sleep(100);
-            // Recebe lista de voos possíveis
-            Frame frame = tc.receive();
-            System.out.println("(1) Reply: " + new String(frame.getData()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
-
-
-    public static class Thread8 extends Thread{
-        String codReserva;
-        public Thread8 (String codigo){
-            this.codReserva = codigo;
-        }
-        @Override
-        public void run(){
-            // TODO:: THREAD CANCELA RESERVAS
-
-            String msg = "ola123";
-            try {
-                // Envia o código da reserva
-                tc.send(8,(msg).getBytes(StandardCharsets.UTF_8));
-                Thread.sleep(100);
-
-                // Recebe confirmação do cancelamento da reserva
-                Frame frame = tc.receive();
-                System.out.println("(1) Reply: " + new String(frame.getData()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static class Thread9 extends Thread{
-        @Override
-        public void run(){
-            // TODO:: THREAD ADMIN FECH SERVIDOR
-            String msg = "ola123";
-            try {
-                // Envia Pedido
-                tc.send(9,(msg).getBytes(StandardCharsets.UTF_8));
-                Thread.sleep(100);
-
-                // Recebe confirmação
-                Frame frame = tc.receive();
-                System.out.println("(1) Reply: " + new String(frame.getData()));
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    */
 }
 

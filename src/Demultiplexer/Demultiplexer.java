@@ -57,8 +57,6 @@ public class Demultiplexer {
                     Frame frame = tc.receive();
 
                     if(frame != null) {
-                        System.out.println("Recebi frame"); //TODO - tirar isto
-
                         //Get entry
                         int number = frame.getNumber();
                         Entry entry = queues.get(number);
@@ -75,7 +73,7 @@ public class Demultiplexer {
                     queues.values().forEach(entry -> entry.getCond().signal());
                 } finally { rtlock.unlock(); }
 
-                //TODO - ver melhor isto
+                //TODO - Perguntar ao professor
                 //Thread.yield();
                 try {
                    Thread.sleep(50);

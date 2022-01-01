@@ -54,21 +54,25 @@ public class Voo implements Comparable<Voo> {
 	 */
 	public boolean addViajante(String idViajante, LocalDate data) {
 		Reservas rs;
-		//TODO - ver se este é um dos casos em que devemos fazer 2-fase locking, ou se isto continua correto
 
+		//Tenta Adicionar o Viajante caso já exista registo de reservas para o dia fornecido
 		try {
 			RWlock.readLock().lock();
 			rs = reservas.get(data);
-		}finally { RWlock.readLock().unlock(); }
+			if (rs != null) return rs.addViajante(idViajante, capacidade);
+		} finally { RWlock.readLock().unlock(); }
 
-		if(rs == null) {
-			if(registarVooNovoDia(data) != null)
-				return addViajante(idViajante, data);
+		//Cria uma instância de Reservas para esse dia, e adiciona o viajante
+		try {
+			RWlock.writeLock().lock();
+			if ((rs = registarVooNovoDia(data)) != null)
+				rs.lock();
 			else
 				return false;
-		}
+		}finally { RWlock.writeLock().unlock(); }
 
-		return rs.addViajante(idViajante,capacidade);
+		try { return rs.addViajante(idViajante, capacidade); }
+		finally { rs.unlock(); }
 	}
 
 	/**
