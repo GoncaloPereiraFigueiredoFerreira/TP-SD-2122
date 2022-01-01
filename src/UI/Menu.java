@@ -24,14 +24,14 @@ public class Menu {
         public boolean validate();
     }
 
-    // Varíável de classe para suportar leitura
+    // Varíavel de classe para suportar leitura
 
     private static Scanner is = new Scanner(System.in);
 
-    // Variáveis de instância
+    // Variaveis de instância
 
-    private List<String> opcoes;            // Lista de opções
-    private List<PreCondition> disponivel;  // Lista de pré-condições
+    private List<String> opcoes;            // Lista de opcões
+    private List<PreCondition> disponivel;  // Lista de pré-condicões
     private List<Handler> handlers;         // Lista de handlers
     private Handler handlerSaida;
 
@@ -48,7 +48,7 @@ public class Menu {
         this.handlers = new ArrayList<>();
         this.opcoes.forEach(s-> {
             this.disponivel.add(()->true);
-            this.handlers.add(()->System.out.println("\nATENÇÃO: Opcao não implementada!"));
+            this.handlers.add(()->System.out.println("\nATENÇÃO: Opcao nao implementada!"));
         });
         this.handlerSaida = null;
     }
@@ -65,7 +65,7 @@ public class Menu {
         this.handlers = new ArrayList<>();
         this.opcoes.forEach(s-> {
             this.disponivel.add(()->true);
-            this.handlers.add(()->System.out.println("\nATENÇÃO: Opcao não implementada!"));
+            this.handlers.add(()->System.out.println("\nATENÇÃO: Opcao nao implementada!"));
         });
     }
 
@@ -81,9 +81,9 @@ public class Menu {
         do {
             show();
             op = readOption();
-            // testar pré-condição
+            // testar pré-condicao
             if (op>0 && !this.disponivel.get(op-1).validate()) {
-                System.out.println("Opção indisponível! Tente novamente.");
+                System.out.println("Opcao indisponível! Tente novamente.");
             } else if (op>0) {
                 // executar handler
                 this.handlers.get(op-1).execute();
@@ -101,9 +101,9 @@ public class Menu {
         do {
             show();
             this.opcao = readOption();
-            // testar pré-condição
+            // testar pré-condicao
             if (this.opcao>0 && !this.disponivel.get(this.opcao-1).validate()) {
-                System.out.println("Opção indisponível! Tente novamente.");
+                System.out.println("Opcao indisponível! Tente novamente.");
             } else if (this.opcao>0) {
                 // executar handler
                 this.handlers.get(this.opcao-1).execute();
@@ -124,7 +124,7 @@ public class Menu {
     /**
      * Metodo que regista uma uma pre-condicao numa opcao do NewMenu.
      *
-     * @param i indice da opcao (começa em 1)
+     * @param i indice da opcao (comeca em 1)
      * @param b pre-condicao a registar
      */
     public void setPreCondition(int i, PreCondition b) {
@@ -134,7 +134,7 @@ public class Menu {
     /**
      * Método para registar um handler numa opcao do NewMenu.
      *
-     * @param i indice da opcao  (começa em 1)
+     * @param i indice da opcao  (comeca em 1)
      * @param h handlers a registar
      */
     public void setHandler(int i, Handler h) {
@@ -163,16 +163,16 @@ public class Menu {
         int op;
         //Scanner is = new Scanner(System.in);
 
-        System.out.print("Opção: ");
+        System.out.print("Opcao: ");
         try {
             String line = is.nextLine();
             op = Integer.parseInt(line);
         }
-        catch (NumberFormatException e) { // Não foi inscrito um int
+        catch (NumberFormatException e) { // Nao foi inscrito um int
             op = -1;
         }
         if (op<0 || op>this.opcoes.size()) {
-            System.out.println("Opção Inválida!!!");
+            System.out.println("Opcao Invalida!!!");
             op = -1;
         }
         return op;
