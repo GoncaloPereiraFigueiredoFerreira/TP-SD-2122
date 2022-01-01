@@ -13,11 +13,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class MainCliente {
 
     /**
-     * Classe utilizada para sinalização de diversos eventos.
-     * Os seguintes valores estão reservados:
-     *      -> -404 : Servidor está fechado
+     * Classe utilizada para sinalizacao de diversos eventos.
+     * Os seguintes valores estao reservados:
+     *      -> -404 : Servidor esta fechado
      *      -> -400 : Fechar cliente
-     *      ->   -1 : Não autenticado
+     *      ->   -1 : Nao autenticado
      *      ->    0 : Cliente autenticado
      *      ->    1 : Administrador autenticado
      */
@@ -47,16 +47,16 @@ public class MainCliente {
         menuAutenticaco.setHandler(3, () -> autenticarHandler(flag, cliente));
 
         //Menu de cliente
-        Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem até um Destino"});
+        Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino"});
         menuCliente.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
-        menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente)); // TODO - N verifica se o server está fechado
+        menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente)); // TODO - N verifica se o server esta fechado
         menuCliente.setHandler(2, () -> cancelarReservaHandler(flag, cliente));
         menuCliente.setHandler(3, () -> listarVoosHandler(flag, cliente));
         //TODO - falta handler 4
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(flag, cliente));
 
         //Menu de administrador
-        Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operações de Cliente", "Inserir Novo Voo", "Encerrar um Dia"});
+        Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operacões de Cliente", "Inserir Novo Voo", "Encerrar um Dia"});
         menuAdmin.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
         menuAdmin.setHandler(1, menuCliente::run);
         menuAdmin.setHandler(2, () -> inserirNovoVooHandler(flag, cliente));
@@ -137,8 +137,8 @@ public class MainCliente {
     // ****** Handlers Cliente ****** //
 
     private static void reservarViagemHandler(Flag flag, Cliente cliente) {
-        MenuInput m  = new MenuInput("Insira o número de localizações que pretende inserir:","Número: ");
-        MenuInput m1 = new MenuInput("Insira uma localização:", "Localização:" ); //todo alterar localizacoes
+        MenuInput m  = new MenuInput("Insira o número de localizacões que pretende inserir:","Número: ");
+        MenuInput m1 = new MenuInput("Insira uma localizacao:", "Localizacao:" ); //todo alterar localizacoes
         MenuInput m2 = new MenuInput("Insira a data inicial (com o formato \"YYYY-MM-DD\"):", "Data: ");
         MenuInput m3 = new MenuInput("Insira a data final (com o formato \"YYYY-MM-DD\"):", "Data: ");
 
@@ -153,7 +153,7 @@ public class MainCliente {
             }
         }
 
-        System.out.println("Insira as localizações pela ordem que pretende executar o percurso.\n");
+        System.out.println("Insira as localizacões pela ordem que pretende executar o percurso.\n");
         List<String> locais = new ArrayList<>();
         for (int i = 0; i < nrLocais; i++){
             m1.executa();
@@ -185,7 +185,7 @@ public class MainCliente {
 
         try {
 
-            //TODO - LUISSSS mete aqui o que queres. N sei como dar print ao id de reserva aqui se tu não sabes
+            //TODO - LUISSSS mete aqui o que queres. N sei como dar print ao id de reserva aqui se tu nao sabes
             int flagInterna = cliente.fazReserva(locais, dataInicial, dataFinal);
 
         }catch (ServerIsClosedException sice){
@@ -209,8 +209,8 @@ public class MainCliente {
         try {
             int flagInterna = cliente.cancelaReserva(idReserva);
             if (flagInterna == 0) System.out.println("Reserva removida");
-            else if (flagInterna == 1) System.out.println("ID da reserva não foi encontrado");
-            else if (flagInterna == 2) System.out.println("Falha de segurança, tente sair da conta e voltar a fazer login");
+            else if (flagInterna == 1) System.out.println("ID da reserva nao foi encontrado");
+            else if (flagInterna == 2) System.out.println("Falha de seguranca, tente sair da conta e voltar a fazer login");
         } catch (ServerIsClosedException sice) {
             flag.setValue(Flag.SERVER_CLOSED);
         }
