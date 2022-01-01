@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MainCliente {
 
@@ -29,8 +30,9 @@ public class MainCliente {
         public static final int ADMIN_LOGGED_IN   =    1;
 
         public Flag(){ flag = NOT_AUTHENTICATED; }
-        public Integer getValue(){ return flag; }
-        public void setValue(Integer flag){ this.flag = flag; }
+        private ReentrantLock lock = new ReentrantLock();
+        public Integer getValue(){ try{ lock.lock(); return flag; } finally{ lock.unlock();} }
+        public void setValue(Integer flag){ try{ lock.lock(); this.flag = flag; } finally{ lock.unlock();} }
     }
 
     public static void main(String[] args) {
@@ -48,7 +50,7 @@ public class MainCliente {
         Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem até um Destino"});
         menuCliente.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
         menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente)); // TODO - N verifica se o server está fechado
-        //TODO - falta handler 2
+        menuCliente.setHandler(2, () -> cancelarReservaHandler(flag, cliente));
         menuCliente.setHandler(3, () -> listarVoosHandler(flag, cliente));
         //TODO - falta handler 4
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(flag, cliente));
@@ -190,8 +192,29 @@ public class MainCliente {
             flag.setValue(Flag.SERVER_CLOSED);
         }
     }
+    private static void cancelarReservaHandler(Flag flag, Cliente cliente) {
+        MenuInput m = new MenuInput("Insira o id da sua reserva", "ID:");
+        //Menu de datas
+        Integer idReserva=null;
 
-    //TODO - falta aqui o handler 2
+        while (idReserva==null) {
+            try {
+                m.executa();
+                idReserva = Integer.valueOf(m.getOpcao());
+            } catch (NumberFormatException ex) {
+                System.out.println("ID de reserva tem que ser um numero inteiro");
+            }
+        }
+
+        try {
+            int flagInterna = cliente.cancelaReserva(idReserva);
+            if (flagInterna == 0) System.out.println("Reserva removida");
+            else if (flagInterna == 1) System.out.println("ID da reserva não foi encontrado");
+            else if (flagInterna == 2) System.out.println("Falha de segurança, tente sair da conta e voltar a fazer login");
+        } catch (ServerIsClosedException sice) {
+            flag.setValue(Flag.SERVER_CLOSED);
+        }
+    }
 
     private static void listarVoosHandler(Flag flag, Cliente cliente) {
         System.out.println("A carregar voos possiveis");

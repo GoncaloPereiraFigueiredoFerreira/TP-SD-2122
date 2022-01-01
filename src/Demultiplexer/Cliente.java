@@ -300,6 +300,34 @@ public class Cliente {
         }
     }
 
+    private void sendDadosCancelaReserva(TaggedConnection tc,Integer idReserva,int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeInt(idReserva);
+        oos.writeUTF(this.utilizador);
+        oos.writeUTF(this.password);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
+    public int cancelaReserva(Integer idReserva) throws ServerIsClosedException{ //tag 7
+        try {
+            TaggedConnection tc= connect();
+            if(tc==null) throw new ServerIsClosedException();
+
+            sendDadosCancelaReserva(tc,idReserva,7);
+
+            return confirmacao(tc.receive(),7);  //0 significa que a reserva foi removida, 1 id nao existe, 2 falha de segurança
+        } catch (IOException e) {
+            return 1;
+        }
+    }
 
 /*
     public static class Thread6 extends Thread{
