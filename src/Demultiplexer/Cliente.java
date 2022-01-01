@@ -219,65 +219,34 @@ public class Cliente {
         }
     }
 
+    private void sendDadosReserva(TaggedConnection tc,List<String> localizacoes, LocalDate dInf,LocalDate dSup,int tag) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+
+        oos.writeInt(localizacoes.size());
+        for (String s:localizacoes)
+            oos.writeUTF(s);
+        oos.writeUTF(utilizador);
+        oos.writeUTF(password);
+        oos.writeObject(dInf);
+        oos.writeObject(dSup);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        tc.send(tag, byteArray);
+
+        oos.close();
+        baos.close();
+    }
+
     public void fazReserva(List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
         try {
             TaggedConnection tc= connect();
             if(tc==null) throw new ServerIsClosedException();
 
-            FazReserva thread = new FazReserva(tc,localizacoes,dInf,dSup,6,this.reservas,this.utilizador,this.password);
-            thread.start();
-        } catch (IOException e) {} //todo
-    }
+            sendDadosReserva(tc,localizacoes,dInf,dSup,6);
 
-    public static class FazReserva extends Thread{
-        TaggedConnection tc;
-        List<String> localizacoes;
-        LocalDate dInf;
-        LocalDate dSup;
-        String utilizador;
-        String password;
-        int tag;
-        QueueDeReservas reservas;
-
-        public FazReserva (TaggedConnection tc,List<String> localizacoes,
-                           LocalDate dInf,LocalDate dSup,int tag,QueueDeReservas reservas,String utilizador,String password){
-            this.tc = tc;
-            this.localizacoes = new ArrayList<>(localizacoes);
-            this.dInf = dInf;
-            this.dSup = dSup;
-            this.utilizador = utilizador;
-            this.password = password;
-            this.tag=tag;
-            this.reservas=reservas;
-        }
-
-        private void sendDadosReserva() throws IOException {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-            oos.writeInt(localizacoes.size());
-            for (String s:localizacoes)
-                oos.writeUTF(s);
-            oos.writeUTF(utilizador);
-            oos.writeUTF(password);
-            oos.writeObject(dInf);
-            oos.writeObject(dSup);
-            oos.flush();
-
-            byte[] byteArray = baos.toByteArray();
-            tc.send(tag, byteArray);
-
-            oos.close();
-            baos.close();
-        }
-
-        @Override
-        public void run(){
             try {
-            // Envia origem, lista de destinos, data inferior, data superior
-                sendDadosReserva();
-            // Recebe o código da reserva (pelos vistos)
-
                 Frame f = tc.receive();
 
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
@@ -289,17 +258,19 @@ public class Cliente {
                 ois.close();
                 bais.close();
 
-                if(bemSucedido==0||bemSucedido==1) //Todo expandir bem sucedidos
-                    System.out.println("ID da reserva: " + id);
-                else if(bemSucedido==2)
-                    System.out.println("Localizacoes inseridas são inválidas");
-                else if(bemSucedido==3)
-                    System.out.println("Numero de localizacoes inserido é invalido");
-                else System.out.println("Error");
+                if(f.getTag()==6) {
+                    if (bemSucedido == 0 || bemSucedido == 1) //Todo expandir bem sucedidos
+                        System.out.println("ID da reserva: " + id);
+                    else if (bemSucedido == 2)
+                        System.out.println("Localizacoes inseridas são inválidas");
+                    else if (bemSucedido == 3)
+                        System.out.println("Numero de localizacoes inserido é invalido");
+                    else System.out.println("Error");
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        } catch (IOException e) {} //todo
     }
 
     private void sendDadosCancelaReserva(TaggedConnection tc,Integer idReserva,int tag) throws IOException {
