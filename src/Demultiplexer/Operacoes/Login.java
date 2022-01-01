@@ -1,7 +1,7 @@
 package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.ConnectionPlusByteArray;
+import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 
 import java.io.ByteArrayInputStream;
@@ -9,16 +9,16 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 public class Login implements OperacaoI{
-    byte[] bytes;
+    Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
     int tag = 1;
 
     public Login(){}
 
-    public Login(ConnectionPlusByteArray cpba,GestorDeDados gestorDeDados){
-        this.bytes= cpba.getBytes();
-        this.tc= cpba.getTg();
+    public Login(TaggedConnection tc,Frame f,GestorDeDados gestorDeDados){
+        this.f= f;
+        this.tc= tc;
         this.gestorDeDados=gestorDeDados;
     }
 
@@ -28,14 +28,14 @@ public class Login implements OperacaoI{
     }
 
     @Override
-    public void newRun(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new Login(cpba,gestorDeDados));
+    public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
+        Thread t = new Thread(new Login(tc,f,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
 
             String username = ois.readUTF();

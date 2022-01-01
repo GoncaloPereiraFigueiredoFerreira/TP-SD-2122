@@ -1,7 +1,7 @@
 package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.ConnectionPlusByteArray;
+import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 
 import java.io.ByteArrayOutputStream;
@@ -10,7 +10,7 @@ import java.io.ObjectOutputStream;
 
 public interface OperacaoI extends Runnable{
     public int getTag();
-    public void newRun(ConnectionPlusByteArray cpba, GestorDeDados gestorDeDados);
+    public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados);
 
     public default void sendConfirmacao(TaggedConnection tc,int confirmacao, int tag) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
