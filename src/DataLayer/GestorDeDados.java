@@ -185,9 +185,8 @@ public class GestorDeDados {
 
 						//Verifica disponibilidade para reserva
 						for (int i = 0; podeReservar && i < voosOrdenados.size(); i++) {
-							Voo voo = voosOrdenados.get(i);
-							if (!voo.podeReservar(data))
-								podeReservar = false;
+							Voo voo 	 = voosOrdenados.get(i);
+							podeReservar = voo.podeReservar(idUtilizador, data);
 						}
 
 						//Faz as reservas se houver disponibilidade
@@ -210,6 +209,7 @@ public class GestorDeDados {
 
 		} finally { voosRwLock.readLock().unlock(); }
 
+		System.out.println("----------------------------------------------------- Adicionei viagem ------------------------------------------------------");
 		//Regista a reserva da viagem
 		try { return addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
 		finally { viagensLock.unlock(); }
