@@ -9,8 +9,10 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server extends Thread {
+    private static final int WORKERS_PER_CONNECTION = 100;
     private Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
     private GestorDeDados gestorDeDados= new GestorDeDados(); //todo contrutor de server com opcao de dar load
 
@@ -46,11 +48,26 @@ public class Server extends Thread {
     public void run() {
         try {
             ServerSocket ss = new ServerSocket(8888);
+            AtomicBoolean running= new AtomicBoolean(true);
 
-            while (true){
+            while(running.get()) {
                 Socket s = ss.accept();
-                if(!addPedido(new TaggedConnection(s)))
-                    break; //Se receber uma tag == -1 então vai deixar de receber pedidos
+
+                Runnable worker = () -> {
+                    try {
+                        TaggedConnection c = new TaggedConnection(s);
+                        while (running.get()) {
+                            Frame frame = c.receive();
+                            if(frame.getTag()==-1)
+                                running.set(false);
+                            int number  = frame.getNumber();
+                            int tag     = frame.getTag();
+                            String data = new String(frame.getData());
+                            addPedido(c);
+                        }
+                    } catch (Exception ignored) { }
+                };
+                new Thread(worker).start(); //todo servidor depois de pedido de fecho espera pelos workers
             }
 
         } catch (IOException e) {
