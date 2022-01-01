@@ -240,6 +240,8 @@ public class Cliente {
                         System.out.println("Localizacoes inseridas são inválidas");
                     else if (bemSucedido == 3)
                         System.out.println("Numero de localizacoes inserido é invalido");
+                    else if (bemSucedido == 4)
+                        System.out.println("Utilizador ja possui uma reserva para este dia");
                     else System.out.println("Error");
                 }
             } catch (Exception e) {

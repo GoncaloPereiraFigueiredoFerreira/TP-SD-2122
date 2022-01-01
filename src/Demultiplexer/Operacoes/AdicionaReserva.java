@@ -58,7 +58,7 @@ public class AdicionaReserva implements OperacaoI{
             bais.close();
 
             int sucesso = gestorDeDados.verificaCredenciais(utilizador,password);
-            int id=0;
+            Integer id=0;
             if(sucesso==0||sucesso==1) {
                 try {
                     id = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
@@ -68,7 +68,10 @@ public class AdicionaReserva implements OperacaoI{
                     sucesso=3;
                 }
             }
-
+            if(id==null){
+                id=0;
+                sucesso=4;
+            }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
