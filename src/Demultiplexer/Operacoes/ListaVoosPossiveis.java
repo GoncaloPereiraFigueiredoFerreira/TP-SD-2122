@@ -41,7 +41,7 @@ public class ListaVoosPossiveis implements OperacaoI{
         try {
             List<List<String>> viagens = gestorDeDados.listaVoosExistentes();
 
-            tc.send(tag,f.getNumber(),(Viagens.serialize(viagens)));
+            tc.send(f.getNumber(),tag,(Viagens.serialize(viagens)));
         } catch (IOException e) {
             e.printStackTrace();
         }

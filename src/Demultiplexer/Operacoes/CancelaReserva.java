@@ -49,10 +49,10 @@ public class CancelaReserva implements OperacaoI{
                 adicionado = gestorDeDados.removeReservasEViagem(utilizador,idReserva); //todo
 
             if (adicionado)
-                sendConfirmacao(tc,f.getNumber(),0,tag); //Removido
+                sendConfirmacao(tc,0,tag,f.getNumber()); //Removido
             else if(logado==1||logado==0)
-                sendConfirmacao(tc,f.getNumber(),1,tag); //ID nao existe
-            else sendConfirmacao(tc,f.getNumber(),2,tag); //Falha de segurança
+                sendConfirmacao(tc,1,tag,f.getNumber()); //ID nao existe
+            else sendConfirmacao(tc,2,tag,f.getNumber()); //Falha de segurança
 
         } catch (IOException e) {
             e.printStackTrace();
