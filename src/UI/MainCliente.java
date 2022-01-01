@@ -75,7 +75,7 @@ public class MainCliente {
         menuCliente.setHandler(1, () -> reservarViagemHandler(nrPedido, cliente));
         menuCliente.setHandler(2, () -> cancelarReservaHandler(nrPedido, cliente));
         menuCliente.setHandler(3, () -> listarVoosHandler(nrPedido, cliente));
-        //TODO - falta handler 4
+        menuCliente.setHandler(4, () -> listarViagensHandler(nrPedido, cliente));
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(nrPedido, cliente));
 
         //Menu de administrador
@@ -255,7 +255,18 @@ public class MainCliente {
         else System.out.println(Viagens.toStringOutput(viagens));
     }
 
-    //TODO - falta handler 4
+    private static void listarViagensHandler(AtomicInteger nrPedido, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+
+        System.out.println("A carregar viagens possiveis");
+
+        List<List<String>> viagens = cliente.listaViagensEscalasSimples(nr);
+
+        if (viagens == null) System.out.println("Falha de conexao");
+        else if (viagens.size() == 0) System.out.println("Nao existem voos possiveis");
+        else System.out.println(Viagens.toStringOutput(viagens));
+    }
 
     private static void listarViagensRestritasHandler(AtomicInteger nrPedido, Cliente cliente) {
         //Atualizacao do número de pedido

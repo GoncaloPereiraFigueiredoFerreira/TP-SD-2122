@@ -275,6 +275,22 @@ public class Cliente {
         }
     }
 
+    public List<List<String>> listaViagensEscalasSimples(int number) { //tag 8
+        try {
+            m.send(number,8,new byte[0],false);
+            Frame f = m.receive(number);
+            m.finishedReceivingMessages(number);
+
+            List<List<String>> viagens= null;
+            if(f.getTag()==8) {
+                viagens = Viagens.deserialize(f.getData());
+            }
+            return viagens;  //se for null entao houve erro de conexão
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
 /*
     public static class Thread6 extends Thread{
         public Thread6 (){
