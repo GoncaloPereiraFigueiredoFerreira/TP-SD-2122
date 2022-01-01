@@ -237,11 +237,11 @@ public class Cliente {
                     if (bemSucedido == 0 || bemSucedido == 1) //Todo expandir bem sucedidos
                         System.out.println("ID da reserva: " + id);
                     else if (bemSucedido == 2)
-                        System.out.println("Localizacoes inseridas são inválidas");
+                        System.out.println("Localizacoes inseridas são inválidas.");
                     else if (bemSucedido == 3)
-                        System.out.println("Numero de localizacoes inserido é invalido");
+                        System.out.println("Numero de localizacoes inserido é invalido.");
                     else if (bemSucedido == 4)
-                        System.out.println("Utilizador ja possui uma reserva para este dia");
+                        System.out.println("Utilizador ja possui uma reserva para este dia ou nao existem lugares disponiveis.");
                     else System.out.println("Error");
                 }
             } catch (Exception e) {

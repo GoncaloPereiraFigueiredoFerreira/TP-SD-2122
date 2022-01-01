@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MainCliente {
+    //TODO - controlo de concorrencia nos prints
 
     /**
      * Classe utilizada para sinalizacao de diversos eventos.

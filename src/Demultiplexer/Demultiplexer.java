@@ -75,7 +75,7 @@ public class Demultiplexer {
                     queues.values().forEach(entry -> entry.getCond().signal());
                 } finally { rtlock.unlock(); }
 
-                //TODO - ver melhor isto
+                //TODO - Perguntar ao professor
                 //Thread.yield();
                 try {
                    Thread.sleep(50);
