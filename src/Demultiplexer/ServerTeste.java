@@ -27,6 +27,5 @@ public class ServerTeste {
         System.out.println("Server is running");
         s.start();
         s.join();
-        System.out.println("Server closed");
     }
 }

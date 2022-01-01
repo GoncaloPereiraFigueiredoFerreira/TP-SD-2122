@@ -6,6 +6,7 @@ import Demultiplexer.Operacoes.OperacaoI;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,16 +58,19 @@ public class Server extends Thread {
                         TaggedConnection c = new TaggedConnection(s);
                         while (running.get()) {
                             Frame frame = c.receive();
-                            if(frame.getTag()==-1)
+                            if(frame.getTag()==-1) {
                                 running.set(false);
+                                ss.close();
+                            }
                             addPedido(c,frame);
                         }
                     } catch (IOException ignored) { }
                 };
                 new Thread(worker).start();
             }
-            ss.close();
 
+        }catch (SocketException se){
+            System.out.println("Server Closed");
         } catch (IOException e) {
                 e.printStackTrace();
         }
