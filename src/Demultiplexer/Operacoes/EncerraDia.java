@@ -47,9 +47,9 @@ public class EncerraDia implements OperacaoI{
 
             try {
                 gestorDeDados.closeDay(dia);
-                sendConfirmacao(tc,0,tag); //Dia fechado
+                sendConfirmacao(tc,f.getNumber(),0,tag); //Dia fechado
             } catch (DateTimeParseException dtpe){
-                sendConfirmacao(tc,1,tag); //Erro ao fechar o dia
+                sendConfirmacao(tc,f.getNumber(),1,tag); //Erro ao fechar o dia
             }
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();

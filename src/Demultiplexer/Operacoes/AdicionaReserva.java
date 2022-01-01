@@ -77,7 +77,7 @@ public class AdicionaReserva implements OperacaoI{
             oos.flush();
 
             byte[] byteArray = baos.toByteArray();
-            tc.send(tag, byteArray);
+            tc.send(tag,f.getNumber(), byteArray);
 
             oos.close();
             baos.close();

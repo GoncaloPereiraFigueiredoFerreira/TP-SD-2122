@@ -46,7 +46,7 @@ public class Login implements OperacaoI{
 
             int logado = gestorDeDados.verificaCredenciais(username,password);
 
-            sendConfirmacao(tc,logado,tag);
+            sendConfirmacao(tc,f.getNumber(),logado,tag);
         } catch (IOException e) {
             e.printStackTrace();
         }

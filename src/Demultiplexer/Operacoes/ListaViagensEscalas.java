@@ -50,7 +50,7 @@ public class ListaViagensEscalas implements OperacaoI{
 
             List<List<String>> viagens = gestorDeDados.listaViagensExistentes(origem,destino);
 
-            tc.send(tag,(Viagens.serialize(viagens)));
+            tc.send(tag,f.getNumber(),(Viagens.serialize(viagens)));
         } catch (IOException e) {
             e.printStackTrace();
         }

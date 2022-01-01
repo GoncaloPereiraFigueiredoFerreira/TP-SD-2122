@@ -47,8 +47,8 @@ public class AddVoo implements OperacaoI{
 
             boolean adicionado = gestorDeDados.addVoo(origem,destino,capacidade);
             if (adicionado)
-                sendConfirmacao(tc,0,tag); //Conta criada com sucesso
-            else sendConfirmacao(tc,1,tag); //Erro ao criar conta
+                sendConfirmacao(tc, f.getNumber(), 0,tag); //Conta criada com sucesso
+            else sendConfirmacao(tc,f.getNumber(),1,tag); //Erro ao criar conta
 
         } catch (IOException e) {
             e.printStackTrace();
