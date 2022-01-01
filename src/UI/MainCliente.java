@@ -49,7 +49,7 @@ public class MainCliente {
         //Menu de cliente
         Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino"});
         menuCliente.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
-        menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente)); // TODO - N verifica se o server esta fechado
+        menuCliente.setHandler(1, () -> reservarViagemHandler(flag, cliente));
         menuCliente.setHandler(2, () -> cancelarReservaHandler(flag, cliente));
         menuCliente.setHandler(3, () -> listarVoosHandler(flag, cliente));
         //TODO - falta handler 4
@@ -137,7 +137,7 @@ public class MainCliente {
     // ****** Handlers Cliente ****** //
 
     private static void reservarViagemHandler(Flag flag, Cliente cliente) {
-        MenuInput m  = new MenuInput("Insira o número de localizacões que pretende inserir:","Número: ");
+        MenuInput m  = new MenuInput("Insira o numero de localizacões que pretende inserir:","Numero: ");
         MenuInput m1 = new MenuInput("Insira uma localizacao:", "Localizacao:" ); //todo alterar localizacoes
         MenuInput m2 = new MenuInput("Insira a data inicial (com o formato \"YYYY-MM-DD\"):", "Data: ");
         MenuInput m3 = new MenuInput("Insira a data final (com o formato \"YYYY-MM-DD\"):", "Data: ");
@@ -149,7 +149,7 @@ public class MainCliente {
                 m.executa();
                 nrLocais = Integer.parseInt(m.getOpcao());
             } catch (NumberFormatException nfe) {
-                System.out.println("Por favor insira um número inteiro.");
+                System.out.println("Por favor insira um numero inteiro.");
             }
         }
 
@@ -192,6 +192,7 @@ public class MainCliente {
             flag.setValue(Flag.SERVER_CLOSED);
         }
     }
+
     private static void cancelarReservaHandler(Flag flag, Cliente cliente) {
         MenuInput m = new MenuInput("Insira o id da sua reserva", "ID:");
         //Menu de datas
