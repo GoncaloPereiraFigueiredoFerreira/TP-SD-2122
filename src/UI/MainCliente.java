@@ -48,9 +48,10 @@ public class MainCliente {
         Demultiplexer m;
 
         try {
-            s = new Socket("localhost", 12345);
+            s = new Socket("localhost", 8888);
             s.setSoTimeout(100);
             m = new Demultiplexer(new TaggedConnection(s));
+            m.start();
         }catch (UnknownHostException uhe){
             System.out.println("Servidor offline.");
             return;
