@@ -57,8 +57,6 @@ public class Demultiplexer {
                     Frame frame = tc.receive();
 
                     if(frame != null) {
-                        System.out.println("Recebi frame"); //TODO - tirar isto
-
                         //Get entry
                         int number = frame.getNumber();
                         Entry entry = queues.get(number);
