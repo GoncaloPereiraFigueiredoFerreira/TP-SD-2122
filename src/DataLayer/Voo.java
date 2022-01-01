@@ -156,11 +156,11 @@ public class Voo implements Comparable<Voo> {
 	 * @param data Data na qual se pretende que haja um voo
 	 * @return o objeto que permite guardar as reservas relativas a esse dia
 	 */
-	public boolean podeReservar (LocalDate data){
+	public boolean podeReservar (String idUtilizador, LocalDate data){
 		try {
 			RWlock.readLock().lock();
 			Reservas rs = reservas.get(data);
-			if(rs == null || rs.getNrViajantes() < capacidade)
+			if(rs == null || (!rs.verificaExistenciaViajante(idUtilizador) && rs.getNrViajantes() < capacidade))
 				return true;
 		} finally { RWlock.readLock().unlock(); }
 		return false;

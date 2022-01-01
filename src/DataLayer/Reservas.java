@@ -65,6 +65,16 @@ public class Reservas{
 		finally { rl.unlock(); }
 	}
 
+	/**
+	 * Verifica a existencia de um viajante
+	 * @param idViajante Identificador do viajante
+	 */
+	public boolean verificaExistenciaViajante(String idViajante) {
+		try{
+			rl.lock();
+			return viajantes.contains(idViajante); }
+		finally { rl.unlock(); }
+	}
 
 	// ****** Lock e Unlock das reservas ******
 
