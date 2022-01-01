@@ -215,7 +215,20 @@ public class MainCliente {
 
         final LocalDate dataInicialF = dataInicial;
         final LocalDate dataFinalF   = dataFinal;
-        new Thread(() -> { cliente.fazReserva(nr, locais, dataInicialF, dataFinalF); }).start();
+        new Thread(() -> {
+            int internaFlag = cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
+            if (internaFlag >= 0)
+                System.out.println("ID da reserva: " + internaFlag);
+            else if (internaFlag == -1)
+                System.out.println("Falha na verificacao de seguranca");
+            else if (internaFlag == -2)
+                System.out.println("Localizacoes inseridas são inválidas.");
+            else if (internaFlag == -3)
+                System.out.println("Numero de localizacoes inserido é invalido.");
+            else if (internaFlag == -4)
+                System.out.println("Utilizador ja possui uma reserva para este dia ou nao existem lugares disponiveis.");
+            else System.out.println("Error");
+        }).start();
     }
 
     private static void cancelarReservaHandler(AtomicInteger nrPedido, Cliente cliente) {

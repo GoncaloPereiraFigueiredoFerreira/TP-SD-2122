@@ -27,7 +27,7 @@ public class Cliente {
         return rValue;
     }
 
-    public void fecharServidor(int number)  { //tag -1 //todo mudar void para boolean
+    public void fecharServidor(int number)  { //tag -1
         try {
             // Envia tag -1 para sinalizar fecho
             m.send(number, -1, new byte[0], true);
@@ -216,7 +216,7 @@ public class Cliente {
         baos.close();
     }
 
-    public void fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) { //tag 6
+    public int fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) { //tag 6
         try {
             sendDadosReserva(number,localizacoes,dInf,dSup,6);
 
@@ -227,27 +227,20 @@ public class Cliente {
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
                 ObjectInputStream ois = new ObjectInputStream(bais);
 
-                int bemSucedido = ois.readInt();
                 int id = ois.readInt();
 
                 ois.close();
                 bais.close();
 
                 if(f.getTag()==6) {
-                    if (bemSucedido == 0 || bemSucedido == 1) //Todo expandir bem sucedidos
-                        System.out.println("ID da reserva: " + id);
-                    else if (bemSucedido == 2)
-                        System.out.println("Localizacoes inseridas são inválidas.");
-                    else if (bemSucedido == 3)
-                        System.out.println("Numero de localizacoes inserido é invalido.");
-                    else if (bemSucedido == 4)
-                        System.out.println("Utilizador ja possui uma reserva para este dia ou nao existem lugares disponiveis.");
-                    else System.out.println("Error");
-                }
+                    return id;
+                } else return -5;
             } catch (Exception e) {
-                e.printStackTrace();
+                return -5;
             }
-        } catch (IOException e) {} //todo
+        } catch (IOException e) {
+            return -5;
+        }
     }
 
     private void sendDadosCancelaReserva(int number, Integer idReserva, int tag) throws IOException {

@@ -63,20 +63,18 @@ public class AdicionaReserva implements OperacaoI{
                 try {
                     id = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
                 }catch (localizacoesInvalidasException e) {
-                    sucesso=2;
+                    id=-2;
                 }catch (numeroLocalizacoesInvalidoException e) {
-                    sucesso=3;
+                    id=-3;
                 }
-            }
+            } else id=-1;
             if(id==null){
-                id=0;
-                sucesso=4;
+                id=-4;
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            oos.writeInt(sucesso); //sucesso -> -1 login errado, 0||1 login correto, 2 localizacoes invalidas, 3 numero de localizacoes invalidas
-            oos.writeInt(id);
+            oos.writeInt(id); //sucesso -> 0||1 login correto,-1 login errado, -2 localizacoes invalidas, -3 numero de localizacoes invalidas, -4 vaga imposivvel
             oos.flush();
 
             byte[] byteArray = baos.toByteArray();
