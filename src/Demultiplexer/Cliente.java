@@ -219,17 +219,14 @@ public class Cliente {
         }
     }
 
-    public int fazReserva(List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
+    public void fazReserva(List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException{ //tag 6
         try {
             TaggedConnection tc= connect();
             if(tc==null) throw new ServerIsClosedException();
 
             FazReserva thread = new FazReserva(tc,localizacoes,dInf,dSup,6,this.reservas,this.utilizador,this.password);
             thread.start();
-            return confirmacao(tc.receive(),6);  //0 significa que o dia foi fechado, 1 caso contrário
-        } catch (IOException e) {
-            return 1;
-        }
+        } catch (IOException e) {} //todo
     }
 
     public static class FazReserva extends Thread{
@@ -280,6 +277,7 @@ public class Cliente {
             // Envia origem, lista de destinos, data inferior, data superior
                 sendDadosReserva();
             // Recebe o código da reserva (pelos vistos)
+
                 Frame f = tc.receive();
 
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
@@ -292,8 +290,12 @@ public class Cliente {
                 bais.close();
 
                 if(bemSucedido==0||bemSucedido==1) //Todo expandir bem sucedidos
-                    reservas.addReserva(id);
-
+                    System.out.println("ID da reserva: " + id);
+                else if(bemSucedido==2)
+                    System.out.println("Localizacoes inseridas são inválidas");
+                else if(bemSucedido==3)
+                    System.out.println("Numero de localizacoes inserido é invalido");
+                else System.out.println("Error");
             } catch (Exception e) {
                 e.printStackTrace();
             }

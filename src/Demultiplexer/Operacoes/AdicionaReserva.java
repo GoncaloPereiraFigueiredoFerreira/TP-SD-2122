@@ -74,6 +74,7 @@ public class AdicionaReserva implements OperacaoI{
 
             oos.writeInt(sucesso); //sucesso -> -1 login errado, 0||1 login correto, 2 localizacoes invalidas, 3 numero de localizacoes invalidas
             oos.writeInt(id);
+            oos.flush();
 
             byte[] byteArray = baos.toByteArray();
             tc.send(tag, byteArray);
