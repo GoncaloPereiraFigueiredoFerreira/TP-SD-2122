@@ -184,9 +184,8 @@ public class MainCliente {
         }
 
         try {
-
-            //TODO - LUISSSS mete aqui o que queres. N sei como dar print ao id de reserva aqui se tu nao sabes
-            int flagInterna = cliente.fazReserva(locais, dataInicial, dataFinal);
+            
+            cliente.fazReserva(locais, dataInicial, dataFinal);
 
         }catch (ServerIsClosedException sice){
             flag.setValue(Flag.SERVER_CLOSED);
