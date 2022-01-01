@@ -5,6 +5,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -56,6 +57,8 @@ public class Demultiplexer {
                     Frame frame = tc.receive();
 
                     if(frame != null) {
+                        System.out.println("Recebi frame"); //TODO - tirar isto
+
                         //Get entry
                         int number = frame.getNumber();
                         Entry entry = queues.get(number);
@@ -72,7 +75,13 @@ public class Demultiplexer {
                     queues.values().forEach(entry -> entry.getCond().signal());
                 } finally { rtlock.unlock(); }
 
-                Thread.yield();
+                //TODO - ver melhor isto
+                //Thread.yield();
+                try {
+                   Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
             try { tc.close(); }
