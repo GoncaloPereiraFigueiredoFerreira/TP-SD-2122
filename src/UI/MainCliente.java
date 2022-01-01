@@ -1,9 +1,12 @@
 package UI;
 
 import Demultiplexer.Cliente;
+import Demultiplexer.Demultiplexer;
 import Demultiplexer.Exceptions.ServerIsClosedException;
+import Demultiplexer.TaggedConnection;
 import Demultiplexer.Viagens;
 
+import java.net.Socket;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -36,8 +39,16 @@ public class MainCliente {
     }
 
     public static void main(String[] args) {
-        Flag flag = new Flag();
+        Flag flag       = new Flag();
         Cliente cliente = new Cliente();
+
+        try {
+            Socket s        = new Socket("localhost", 12345);
+            s.setSoTimeout(100);
+            Demultiplexer m = new Demultiplexer(new TaggedConnection(s));
+        }catch (Exception e){
+            //TODO
+        }
 
         //Menu de autenticacao
         Menu menuAutenticaco = new Menu("Menu de autenticacao", new String[]{"Registar cliente", "Registar adminstrador", "Autenticar"});
@@ -56,11 +67,12 @@ public class MainCliente {
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(flag, cliente));
 
         //Menu de administrador
-        Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operacões de Cliente", "Inserir Novo Voo", "Encerrar um Dia"});
+        Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operacões de Cliente", "Inserir Novo Voo", "Encerrar um Dia","Fechar servidor"});
         menuAdmin.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
         menuAdmin.setHandler(1, menuCliente::run);
         menuAdmin.setHandler(2, () -> inserirNovoVooHandler(flag, cliente));
         menuAdmin.setHandler(3, () -> encerrarDiaHandler(flag,cliente));
+        menuAdmin.setHandler(4, () -> fecharServidorHandler(flag,cliente));
 
         while (!flag.getValue().equals(Flag.CLOSE_CLIENT)) {
 
@@ -183,13 +195,15 @@ public class MainCliente {
             }
         }
 
-        try {
-            
-            cliente.fazReserva(locais, dataInicial, dataFinal);
-
-        }catch (ServerIsClosedException sice){
-            flag.setValue(Flag.SERVER_CLOSED);
-        }
+        final LocalDate dataInicialF = dataInicial;
+        final LocalDate dataFinalF   = dataFinal;
+        new Thread(() -> {
+            try {
+                cliente.fazReserva(locais, dataInicialF, dataFinalF);
+            }catch (ServerIsClosedException sice){
+                flag.setValue(Flag.SERVER_CLOSED);
+            }
+        }).start();
     }
 
     private static void cancelarReservaHandler(Flag flag, Cliente cliente) {
@@ -305,5 +319,10 @@ public class MainCliente {
         } catch (ServerIsClosedException sice){
             flag.setValue(Flag.SERVER_CLOSED);
         }
+    }
+
+    private static void fecharServidorHandler(Flag flag, Cliente cliente) {
+        try { cliente.fecharServidor(); }
+        catch (ServerIsClosedException sice){ flag.setValue(Flag.SERVER_CLOSED); }
     }
 }
