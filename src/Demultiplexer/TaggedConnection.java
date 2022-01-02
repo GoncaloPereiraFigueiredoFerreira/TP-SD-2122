@@ -20,10 +20,20 @@ public class TaggedConnection implements AutoCloseable {
         this.dis    = new DataInputStream(socket.getInputStream());
     }
 
+    /**
+     * Envia um frame ao socket correspondente
+     * @param frame Frame que se deseja enviar
+     */
     public void send(Frame frame) throws IOException {
         send(frame.getNumber(), frame.getTag(),frame.getData());
     }
 
+    /**
+     * Envia um frame ao socket correspondente
+     * @param number Numero da operacao
+     * @param tag Tag da operacao
+     * @param data Conteudo do frame
+     */
     public void send(int number, int tag, byte[] data) throws IOException {
         wLock.lock();
         try {
@@ -35,6 +45,10 @@ public class TaggedConnection implements AutoCloseable {
         } finally { wLock.unlock(); }
     }
 
+    /**
+     * Recebe frame do socket referente a esta conexão
+     * @return Frame recebido
+     */
     public Frame receive() throws IOException {
         int number, tag, dataSize;
         byte[] data;
@@ -52,6 +66,9 @@ public class TaggedConnection implements AutoCloseable {
         return new Frame(number, tag, data);
     }
 
+    /**
+     * Fecha a conexão com o outro socket
+     */
     public void close() throws IOException {
         socket.shutdownInput();
         socket.shutdownOutput();

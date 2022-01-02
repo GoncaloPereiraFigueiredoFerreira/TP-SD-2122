@@ -22,11 +22,20 @@ public class AddVoo implements OperacaoI{
         this.gestorDeDados=gestorDeDados;
     }
 
+    /**
+     * @return  TAG correspondente a operacao
+     */
     @Override
     public int getTag() {
         return tag;
     }
 
+    /**
+     * Inicializa uma nova operacao para responder ao pedido do cliente
+     * @param tc Conexão atual entre o servidor e o cliente
+     * @param  f Frame recebido que foi enviado pelo cliente
+     * @param  gestorDeDados Camada de dados onde vão ser procuradas as informações relativas aos pedidos do cliente
+     */
     @Override
     public void newRun(TaggedConnection tc, Frame f, GestorDeDados gestorDeDados) {
         Thread t = new Thread(new AddVoo(tc,f,gestorDeDados));
@@ -47,7 +56,7 @@ public class AddVoo implements OperacaoI{
 
             boolean adicionado = gestorDeDados.addVoo(origem,destino,capacidade);
             if (adicionado)
-                sendConfirmacao(tc,0,tag,f.getNumber()); //Conta criada com sucesso
+                sendConfirmacao(tc,0,tag,f.getNumber()); //Voo criada com sucesso
             else sendConfirmacao(tc,1,tag,f.getNumber()); //Erro ao criar conta
 
         } catch (IOException e) {

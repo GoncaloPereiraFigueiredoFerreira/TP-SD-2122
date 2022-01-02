@@ -9,14 +9,23 @@ public class Frame {
         this.number = number; this.tag = tag; this.data = data;
     }
 
+    /**
+     * @return Numero de operacao correspondente ao frame
+     */
     public int getNumber() {
         return number;
     }
 
+    /**
+     * @return TAG da operacao correspondente ao frame
+     */
     public int getTag() {
         return tag;
     }
 
+    /**
+     * @return Conteudo da data do frame
+     */
     public byte[] getData() {
         return data.clone();
     }

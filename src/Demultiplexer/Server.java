@@ -13,15 +13,23 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server extends Thread {
-    private static final int WORKERS_PER_CONNECTION = 100;
     private Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
     private GestorDeDados gestorDeDados= new GestorDeDados();
 
-
-    public boolean operationListIsValid(List<OperacaoI> operacoes){
+    /**
+     * Verifica se a lista de operacoes é valida
+     * @param operacoes Lista de operacoes que obedecem a interface OperacaoI
+     * @return true caso as operacoes não tenham TAG's em comum e a tag seja positiva
+     */
+    private boolean operationListIsValid(List<OperacaoI> operacoes){
         return operacoes.stream().mapToInt(OperacaoI::getTag).filter(e->e>=0).distinct().count() == operacoes.size();//Verifica se todas as tags são >= 0 e se são todas diferentes
     }
 
+    /**
+     * Carrega um mapa de operacoes com as operacoes disponibilizadas
+     * @param operacoes Lista de operacoes que obedecem a interface OperacaoI
+     * @return true caso as operacoes não tenham TAG's em comum e a tag seja positiva e o mapa tenha dado load
+     */
     public boolean loadServer(List<OperacaoI> operacoes){
         if(operationListIsValid(operacoes)) {
             for (OperacaoI operacao : operacoes) {
@@ -31,6 +39,13 @@ public class Server extends Thread {
         } else return false;
     }
 
+    /**
+     * Cria uma thread com o mapa correspondente a tag fornecida no frame
+     * @param tg Conexão atual entre o servidor e o cliente
+     * @param  f Frame enviado pelo cliente
+     * @return true caso a tag corresponda a uma operacao do servidor e tenha sido criada uma thread;
+     *         false caso contrario
+     */
     public boolean addPedido(TaggedConnection tg,Frame f) throws IOException {
         int tag = f.getTag();
         if(tag!=-1) {  // if tag == -1 then close
@@ -44,6 +59,9 @@ public class Server extends Thread {
         }
     }
 
+    /**
+     * Liga o servidor pronto para receber pedidos na porta 8888
+     */
     @Override
     public void run() {
         try {

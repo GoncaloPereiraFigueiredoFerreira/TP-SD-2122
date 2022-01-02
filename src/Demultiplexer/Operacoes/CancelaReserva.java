@@ -20,11 +20,20 @@ public class CancelaReserva implements OperacaoI{
         this.gestorDeDados=gestorDeDados;
     }
 
+    /**
+     * @return  TAG correspondente a operacao
+     */
     @Override
     public int getTag() {
         return tag;
     }
 
+    /**
+     * Inicializa uma nova operacao para responder ao pedido do cliente
+     * @param tc Conexão atual entre o servidor e o cliente
+     * @param  f Frame recebido que foi enviado pelo cliente
+     * @param  gestorDeDados Camada de dados onde vão ser procuradas as informações relativas aos pedidos do cliente
+     */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
         Thread t = new Thread(new CancelaReserva(tc,f,gestorDeDados));

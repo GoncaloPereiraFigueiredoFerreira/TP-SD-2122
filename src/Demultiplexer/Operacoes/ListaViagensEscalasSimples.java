@@ -4,12 +4,7 @@ import DataLayer.GestorDeDados;
 import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 import Demultiplexer.Viagens;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ListaViagensEscalasSimples implements OperacaoI{
@@ -26,11 +21,20 @@ public class ListaViagensEscalasSimples implements OperacaoI{
         this.gestorDeDados=gestorDeDados;
     }
 
+    /**
+     * @return  TAG correspondente a operacao
+     */
     @Override
     public int getTag() {
         return tag;
     }
 
+    /**
+     * Inicializa uma nova operacao para responder ao pedido do cliente
+     * @param tc Conexão atual entre o servidor e o cliente
+     * @param  f Frame recebido que foi enviado pelo cliente
+     * @param  gestorDeDados Camada de dados onde vão ser procuradas as informações relativas aos pedidos do cliente
+     */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
         Thread t = new Thread(new ListaViagensEscalasSimples(tc,f,gestorDeDados));
