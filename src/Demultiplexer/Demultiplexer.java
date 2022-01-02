@@ -1,9 +1,6 @@
 package Demultiplexer;
 
-import Demultiplexer.Exceptions.ServerIsClosedException;
-
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -113,11 +110,11 @@ public class Demultiplexer {
         return frame;
     }
 
-    public void send(int number, int tag, byte[] arr, boolean oneWay) throws IOException, ServerIsClosedException {
+    public void send(int number, int tag, byte[] arr, boolean oneWay) throws IOException {
         send(new Frame(number, tag, arr), oneWay);
     }
 
-    public void send(Frame frame, boolean oneWay) throws IOException, ServerIsClosedException {
+    public void send(Frame frame, boolean oneWay) throws IOException {
 
         if (frame == null) throw new IllegalArgumentException();
 
@@ -137,8 +134,6 @@ public class Demultiplexer {
 
             tc.send(frame);
 
-        } catch (SocketException se) {
-            throw new ServerIsClosedException();
         } finally { rtlock.unlock(); }
     }
 
