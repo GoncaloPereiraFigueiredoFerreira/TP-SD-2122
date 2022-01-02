@@ -199,7 +199,7 @@ public class MainCliente {
             printsLock.lock();
 
             MenuInput m = new MenuInput("Insira o numero de localizacoes que pretende inserir", "Numero: ");
-            MenuInput m1 = new MenuInput("Insira uma localizacao", "Localizacao:"); //todo alterar localizacoes
+            MenuInput m1 = new MenuInput("Insira uma localizacao", "Localizacao:");
             MenuInput m2 = new MenuInput("Insira a data inicial (com o formato \"YYYY-MM-DD\")", "Data: ");
             MenuInput m3 = new MenuInput("Insira a data final (com o formato \"YYYY-MM-DD\")", "Data: ");
 
