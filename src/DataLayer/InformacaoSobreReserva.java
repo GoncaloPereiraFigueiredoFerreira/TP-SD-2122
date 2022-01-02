@@ -7,7 +7,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class InformacaoSobreReserva implements Serializable {
-    private int state;
     private int idReserva;
     private LocalDate dataReserva;
     private List<String> localizacoes;
@@ -18,16 +17,9 @@ public class InformacaoSobreReserva implements Serializable {
      * @param localizacoes Localizacoes que constituem a viagem reservada
      */
     public InformacaoSobreReserva(int idReserva, LocalDate dataReserva, Collection<String> localizacoes){
-        this.state       = 0;
         this.idReserva   = idReserva;
         this.dataReserva = dataReserva;
         this.localizacoes= new ArrayList<>(localizacoes);
-    }
-    public InformacaoSobreReserva(int state){
-        this.state       = state;
-        this.idReserva   = 0;
-        this.dataReserva = null;
-        this.localizacoes= new ArrayList<>();
     }
 
     /**
@@ -61,17 +53,13 @@ public class InformacaoSobreReserva implements Serializable {
     }
 
     public String toString(){
-        StringBuilder sb = new StringBuilder("Sequencia de voos da reserva:"+this.idReserva +"do dia" + this.dataReserva);
+        StringBuilder sb = new StringBuilder("Sequencia de voos da reserva com o id \""+this.idReserva+"\" do dia " + this.dataReserva+ "\n    ");
         int i;
         for (i=0;i<this.localizacoes.size()-1;i++) {
             sb.append(this.localizacoes.get(i)).append(" -> ");
         }
         sb.append(this.localizacoes.get(i)).append("\n");
         return sb.toString();
-    }
-
-    public int getState() {
-        return state;
     }
 
     public int getIdReserva() {

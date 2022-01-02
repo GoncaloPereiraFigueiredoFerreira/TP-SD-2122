@@ -3,6 +3,7 @@ package Demultiplexer;
 import DataLayer.InformacaoSobreReserva;
 import DataLayer.Viagem;
 import Demultiplexer.ClassesSerializable.Viagens;
+import Demultiplexer.Exceptions.ReservaFailException;
 import Demultiplexer.Exceptions.ServerIsClosedException;
 import Demultiplexer.Operacoes.ReservasUtilizador;
 
@@ -339,10 +340,10 @@ public class Cliente {
      * -3 caso o numero de localizacoes seja invalido;
      * -4 caso o utilizador ja possua uma reserva para este dia ou nao existam lugares disponiveis
      */
-    public InformacaoSobreReserva fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException { //tag 6
+    public InformacaoSobreReserva fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException, ReservaFailException { //tag 6
         try {
             sendDadosReserva(number,localizacoes,dInf,dSup,6);
-            InformacaoSobreReserva reserva;
+            InformacaoSobreReserva reserva = null;
             try {
                 Frame f = m.receive(number);
                 m.finishedReceivingMessages(number);
@@ -350,19 +351,36 @@ public class Cliente {
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
                 ObjectInputStream ois = new ObjectInputStream(bais);
 
-                reserva=InformacaoSobreReserva.deserialize(ois);
+                int confirmacao = ois.readInt();
+                if(confirmacao==0||confirmacao==1)
+                    reserva=InformacaoSobreReserva.deserialize(ois);
 
                 ois.close();
                 bais.close();
 
+                if(!(confirmacao==0||confirmacao==1))
+                     if (confirmacao == -1)
+                         throw new ReservaFailException( "Falha na verificacao de seguranca.");
+                     else if (confirmacao == -2)
+                         throw new ReservaFailException( "Localizacoes inseridas sao invalidas.");
+                    else if (confirmacao == -3)
+                         throw new ReservaFailException( "Numero de localizacoes inserido é invalido.");
+                    else if (confirmacao == -4)
+                         throw new ReservaFailException("""
+                                 Nao foi possivel efetuar a reserva.\s
+                                 Razoes pela qual nao foi possivel (Pode ser uma combinacao) :
+                                  -> O utilizador ja possui uma reserva para todos os dias pertencentes ao intervalo
+                                  -> Nao existem lugares disponiveis\s
+                                  -> Os dias pertencentes ao intervalo estao fechados""");
+
                 if(f.getTag()==6) {
                     return reserva;
-                } else return new InformacaoSobreReserva(-5);
-            } catch (Exception e) {
-                return new InformacaoSobreReserva(-5);
+                } else throw new ReservaFailException("Error");
+            } catch (IOException |ClassNotFoundException e) {
+                throw new ReservaFailException("Error");
             }
         } catch (IOException e) {
-            return new InformacaoSobreReserva(-5);
+            throw new ReservaFailException("Error");
         }
     }
 
@@ -446,7 +464,8 @@ public class Cliente {
 
     public Collection<InformacaoSobreReserva> listaReservasUtilizador(int number) throws ServerIsClosedException { //tag 9
         try {
-            m.send(number,9,new byte[0],false);
+            sendDadosViagensUtilizador(number,9);
+
             Frame f = m.receive(number);
             m.finishedReceivingMessages(number);
 

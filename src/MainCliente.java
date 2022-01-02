@@ -1,6 +1,7 @@
 import DataLayer.InformacaoSobreReserva;
 import Demultiplexer.Cliente;
 import Demultiplexer.Demultiplexer;
+import Demultiplexer.Exceptions.ReservaFailException;
 import Demultiplexer.Exceptions.ServerIsClosedException;
 import Demultiplexer.TaggedConnection;
 import Demultiplexer.ClassesSerializable.Viagens;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -76,14 +78,15 @@ public class MainCliente {
         menuAutenticao.setLock(printsLock);
 
         //Menu de cliente
-        Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino", "Receber resposta de pedidos"});
+        Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino","Listar reservas", "Receber resposta de pedidos"});
         menuCliente.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
         menuCliente.setHandler(1, () -> reservarViagemHandler(nrPedido, cliente));
         menuCliente.setHandler(2, () -> cancelarReservaHandler(nrPedido, cliente));
         menuCliente.setHandler(3, () -> listarVoosHandler(nrPedido, cliente));
         menuCliente.setHandler(4, () -> listarViagensHandler(nrPedido, cliente));
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(nrPedido, cliente));
-        menuCliente.setHandler(6, () -> {});
+        menuCliente.setHandler(6, () -> listarReservasHandler(nrPedido,cliente));
+        menuCliente.setHandler(7, () -> {});
         menuCliente.setLock(printsLock);
 
         //Menu de administrador
@@ -266,25 +269,16 @@ public class MainCliente {
         final LocalDate dataInicialF = dataInicial;
         final LocalDate dataFinalF   = dataFinal;
         new Thread(() -> {
+            String headerPedido = "Reserva de viagem entre " + locais.get(0) + " e " + locais.get(locais.size() - 1);
             try {
                 InformacaoSobreReserva reserva = cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
                 int internaFlag = reserva.getIdReserva();
 
-                String headerPedido = "Reserva de viagem entre " + locais.get(0) + " e " + locais.get(locais.size() - 1);
-
-                if (internaFlag == 0)
-                    printRespostaPedido(headerPedido, "ID da reserva: " + reserva.getIdReserva() + " | Data da reserva: "+reserva.getDataReserva());
-                else if (internaFlag == -1)
-                    printRespostaPedido(headerPedido, "Falha na verificacao de seguranca");
-                else if (internaFlag == -2)
-                    printRespostaPedido(headerPedido, "Localizacoes inseridas sao invalidas.");
-                else if (internaFlag == -3)
-                    printRespostaPedido(headerPedido, "Numero de localizacoes inserido é invalido.");
-                else if (internaFlag == -4)
-                    printRespostaPedido(headerPedido, "Nao foi possivel efetuar a reserva. \nRazoes pela qual nao foi possivel (Pode ser uma combinacao) :\n -> O utilizador ja possui uma reserva para todos os dias pertencentes ao intervalo\n -> Nao existem lugares disponiveis \n -> Os dias pertencentes ao intervalo estao fechados");
-                else printRespostaPedido(headerPedido, "Error");
+                printRespostaPedido(headerPedido, "ID da reserva: " + reserva.getIdReserva() + " | Data da reserva: "+reserva.getDataReserva());
             }catch (ServerIsClosedException sice){
                 System.out.println("\n\n\nO Servidor encontra-se fechado. Tente novamente mais tarde!\n");
+            }catch (ReservaFailException fail){
+                printRespostaPedido(headerPedido,fail.getMessage());
             }
         }).start();
     }
@@ -501,6 +495,30 @@ public class MainCliente {
         }catch (ServerIsClosedException sice){
             System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
         }
+    }
+
+
+    private static void listarReservasHandler(AtomicInteger nrPedido, Cliente cliente) {
+        //Atualizacao do número de pedido
+        int nr = nrPedido.getAndIncrement();
+        new Thread(() -> {
+            try {
+                Collection<InformacaoSobreReserva> reservas = cliente.listaReservasUtilizador(nr);
+                String headerPedido = "Listar reservas";
+
+                if (reservas == null) printRespostaPedido(headerPedido, "Falha de conexao");
+                else if (reservas.size() == 0) printRespostaPedido(headerPedido, "Não existem reservas");
+                else{
+                    StringBuilder sb = new StringBuilder();
+                    for (InformacaoSobreReserva reserva:reservas){
+                        sb.append(reserva.toString()).append("\n");
+                    }
+                    printRespostaPedido(headerPedido, sb.toString());
+                }
+            }catch (ServerIsClosedException sice){
+                System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
+            }
+        }).start();
     }
 
 

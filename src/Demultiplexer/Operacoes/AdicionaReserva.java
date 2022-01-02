@@ -68,23 +68,24 @@ public class AdicionaReserva implements OperacaoI{
 
             int sucesso = gestorDeDados.verificaCredenciais(utilizador,password);
             InformacaoSobreReserva reserva = null;
+
             if(sucesso==0||sucesso==1) {
                 try {
                     reserva = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
-                    if(reserva!=null)System.out.println("O ALEX FEZ MERDA");
                 }catch (localizacoesInvalidasException e) {
-                    reserva= new InformacaoSobreReserva(-2);
+                    sucesso=-2;
                 }catch (numeroLocalizacoesInvalidoException e) {
-                    reserva= new InformacaoSobreReserva(-3);
+                    sucesso=-3;
                 }
-            } else reserva= new InformacaoSobreReserva(-1);
+            } else sucesso=-1;
             if(reserva==null){
-                reserva= new InformacaoSobreReserva(-4);
+                sucesso=-4;
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            reserva.serialize(oos);//state value: sucesso -> 0,-1 login errado, -2 localizacoes invalidas, -3 numero de localizacoes invalidas, -4 vaga imposivvel
+            oos.writeInt(sucesso);// sucesso -> 0||1,-1 login errado, -2 localizacoes invalidas, -3 numero de localizacoes invalidas, -4 vaga imposivel
+            if(sucesso==0||sucesso==1) reserva.serialize(oos);
             oos.flush();
 
             byte[] byteArray = baos.toByteArray();
