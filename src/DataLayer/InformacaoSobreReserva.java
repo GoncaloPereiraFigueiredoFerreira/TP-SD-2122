@@ -7,9 +7,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class InformacaoSobreReserva implements Serializable {
-    int idReserva;
-    LocalDate dataReserva;
-    List<String> localizacoes;
+    private int state;
+    private int idReserva;
+    private LocalDate dataReserva;
+    private List<String> localizacoes;
 
     /**
      * @param idReserva Identificador da reserva
@@ -17,55 +18,71 @@ public class InformacaoSobreReserva implements Serializable {
      * @param localizacoes Localizacoes que constituem a viagem reservada
      */
     public InformacaoSobreReserva(int idReserva, LocalDate dataReserva, Collection<String> localizacoes){
+        this.state       = 0;
         this.idReserva   = idReserva;
         this.dataReserva = dataReserva;
         this.localizacoes= new ArrayList<>(localizacoes);
     }
-
-    /**
-     * Da serialize do objeto
-     * @return Array de bytes com a informacao sobre o objeto
-     */
-    public byte[] serialize () throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-        oos.writeInt(this.idReserva);
-        oos.writeObject(this.dataReserva);
-        oos.writeInt(this.localizacoes.size());
-        for (String localizacao:this.localizacoes){
-            oos.writeUTF(localizacao);
-        }
-        oos.flush();
-        byte[] byteArray = baos.toByteArray();
-
-        oos.close();
-        baos.close();
-
-        return byteArray;
+    public InformacaoSobreReserva(int state){
+        this.state       = state;
+        this.idReserva   = 0;
+        this.dataReserva = null;
+        this.localizacoes= new ArrayList<>();
     }
 
     /**
-     * Da desserialize a um byte[] para obter uma lista de listas de strings
-     * @param bytes Array de bytes com a informacao sobre a viagens
-     * @return Viagens que se pretende obter
+     * Da serialize do objeto
+     * @param out ObjectOutputStream onde o objeto vai ser escrito
      */
-    public static InformacaoSobreReserva deserialize (byte[] bytes) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        ObjectInputStream ois = new ObjectInputStream(bais);
+    public void serialize (ObjectOutputStream out) throws IOException {
+        out.writeInt(this.idReserva);
+        out.writeObject(this.dataReserva);
+        out.writeInt(this.localizacoes.size());
+        for (String localizacao:this.localizacoes){
+            out.writeUTF(localizacao);
+        }
+    }
 
+    /**
+     * Da desserialize ao object input stream para obter o objeto
+     * @param in ObjectInputStream de onde vai ler o objeto
+     * @return Objeto
+     */
+    public static InformacaoSobreReserva deserialize (ObjectInputStream in) throws IOException, ClassNotFoundException {
         List<String> localizacoes = new ArrayList<>();
 
-        int idReserva = ois.readInt();
-        LocalDate dataReserva = (LocalDate) ois.readObject();
-        int length = ois.readInt();
+        int idReserva = in.readInt();
+        LocalDate dataReserva = (LocalDate) in.readObject();
+        int length = in.readInt();
         for (int i=0;i<length;i++){
-            localizacoes.add(ois.readUTF());
+            localizacoes.add(in.readUTF());
         }
-
-        ois.close();
-        bais.close();
-
         return new InformacaoSobreReserva(idReserva,dataReserva,localizacoes);
+    }
+
+    public String toString(){
+        StringBuilder sb = new StringBuilder("Sequencia de voos da reserva:"+this.idReserva +"do dia" + this.dataReserva);
+        int i;
+        for (i=0;i<this.localizacoes.size()-1;i++) {
+            sb.append(this.localizacoes.get(i)).append(" -> ");
+        }
+        sb.append(this.localizacoes.get(i)).append("\n");
+        return sb.toString();
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    public int getIdReserva() {
+        return idReserva;
+    }
+
+    public LocalDate getDataReserva() {
+        return dataReserva;
+    }
+
+    public List<String> getLocalizacoes() {
+        return new ArrayList<>(localizacoes);
     }
 }

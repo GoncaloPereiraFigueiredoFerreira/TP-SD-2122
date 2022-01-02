@@ -1,3 +1,4 @@
+import DataLayer.InformacaoSobreReserva;
 import Demultiplexer.Cliente;
 import Demultiplexer.Demultiplexer;
 import Demultiplexer.Exceptions.ServerIsClosedException;
@@ -266,12 +267,13 @@ public class MainCliente {
         final LocalDate dataFinalF   = dataFinal;
         new Thread(() -> {
             try {
-                int internaFlag = cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
+                InformacaoSobreReserva reserva = cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
+                int internaFlag = reserva.getIdReserva();
 
                 String headerPedido = "Reserva de viagem entre " + locais.get(0) + " e " + locais.get(locais.size() - 1);
 
-                if (internaFlag >= 0)
-                    printRespostaPedido(headerPedido, "ID da reserva: " + internaFlag);
+                if (internaFlag == 0)
+                    printRespostaPedido(headerPedido, "ID da reserva: " + reserva.getIdReserva() + " | Data da reserva: "+reserva.getDataReserva());
                 else if (internaFlag == -1)
                     printRespostaPedido(headerPedido, "Falha na verificacao de seguranca");
                 else if (internaFlag == -2)

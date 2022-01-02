@@ -3,6 +3,7 @@ package Demultiplexer.Operacoes;
 import DataLayer.Exceptions.localizacoesInvalidasException;
 import DataLayer.Exceptions.numeroLocalizacoesInvalidoException;
 import DataLayer.GestorDeDados;
+import DataLayer.InformacaoSobreReserva;
 import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 
@@ -66,23 +67,24 @@ public class AdicionaReserva implements OperacaoI{
             bais.close();
 
             int sucesso = gestorDeDados.verificaCredenciais(utilizador,password);
-            Integer id=0;
+            InformacaoSobreReserva reserva = null;
             if(sucesso==0||sucesso==1) {
                 try {
-                    id = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
+                    reserva = gestorDeDados.fazRevervasViagem(utilizador, localizacoes, dInf, dSup);
+                    if(reserva!=null)System.out.println("O ALEX FEZ MERDA");
                 }catch (localizacoesInvalidasException e) {
-                    id=-2;
+                    reserva= new InformacaoSobreReserva(-2);
                 }catch (numeroLocalizacoesInvalidoException e) {
-                    id=-3;
+                    reserva= new InformacaoSobreReserva(-3);
                 }
-            } else id=-1;
-            if(id==null){
-                id=-4;
+            } else reserva= new InformacaoSobreReserva(-1);
+            if(reserva==null){
+                reserva= new InformacaoSobreReserva(-4);
             }
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-            oos.writeInt(id); //sucesso -> 0||1 login correto,-1 login errado, -2 localizacoes invalidas, -3 numero de localizacoes invalidas, -4 vaga imposivvel
+            reserva.serialize(oos);//state value: sucesso -> 0,-1 login errado, -2 localizacoes invalidas, -3 numero de localizacoes invalidas, -4 vaga imposivvel
             oos.flush();
 
             byte[] byteArray = baos.toByteArray();

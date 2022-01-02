@@ -1,7 +1,7 @@
 package Demultiplexer;
 
+import DataLayer.InformacaoSobreReserva;
 import DataLayer.Viagem;
-import Demultiplexer.ClassesSerializable.InformacaoSobreReserva;
 import Demultiplexer.ClassesSerializable.Viagens;
 import Demultiplexer.Exceptions.ServerIsClosedException;
 import Demultiplexer.Operacoes.ReservasUtilizador;
@@ -339,10 +339,10 @@ public class Cliente {
      * -3 caso o numero de localizacoes seja invalido;
      * -4 caso o utilizador ja possua uma reserva para este dia ou nao existam lugares disponiveis
      */
-    public int fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException { //tag 6
+    public InformacaoSobreReserva fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException { //tag 6
         try {
             sendDadosReserva(number,localizacoes,dInf,dSup,6);
-
+            InformacaoSobreReserva reserva;
             try {
                 Frame f = m.receive(number);
                 m.finishedReceivingMessages(number);
@@ -350,19 +350,19 @@ public class Cliente {
                 ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
                 ObjectInputStream ois = new ObjectInputStream(bais);
 
-                int id = ois.readInt();
+                reserva=InformacaoSobreReserva.deserialize(ois);
 
                 ois.close();
                 bais.close();
 
                 if(f.getTag()==6) {
-                    return id;
-                } else return -5;
+                    return reserva;
+                } else return new InformacaoSobreReserva(-5);
             } catch (Exception e) {
-                return -5;
+                return new InformacaoSobreReserva(-5);
             }
         } catch (IOException e) {
-            return -5;
+            return new InformacaoSobreReserva(-5);
         }
     }
 

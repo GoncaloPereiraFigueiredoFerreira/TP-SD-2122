@@ -1,8 +1,8 @@
 package Demultiplexer.Operacoes;
 
 import DataLayer.GestorDeDados;
+import DataLayer.InformacaoSobreReserva;
 import DataLayer.Viagem;
-import Demultiplexer.ClassesSerializable.InformacaoSobreReserva;
 import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
 
@@ -61,7 +61,7 @@ public class ReservasUtilizador implements OperacaoI{
 
             oos.writeInt(reservas.size());
             for (InformacaoSobreReserva reserva:reservas){
-                oos.write(reserva.serialize());
+                reserva.serialize(oos);
             }
             oos.flush();
 
