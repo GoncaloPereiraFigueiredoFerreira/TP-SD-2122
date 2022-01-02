@@ -1,5 +1,6 @@
 package Demultiplexer;
 
+import Demultiplexer.ClassesSerializable.Viagens;
 import Demultiplexer.Exceptions.ServerIsClosedException;
 
 import java.io.*;

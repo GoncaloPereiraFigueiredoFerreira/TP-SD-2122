@@ -3,7 +3,7 @@ package Demultiplexer.Operacoes;
 import DataLayer.GestorDeDados;
 import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
-import Demultiplexer.Viagens;
+import Demultiplexer.ClassesSerializable.Viagens;
 import java.io.IOException;
 import java.util.List;
 

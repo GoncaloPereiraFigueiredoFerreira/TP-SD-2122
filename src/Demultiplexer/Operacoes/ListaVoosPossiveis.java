@@ -3,13 +3,9 @@ package Demultiplexer.Operacoes;
 import DataLayer.GestorDeDados;
 import Demultiplexer.Frame;
 import Demultiplexer.TaggedConnection;
-import Demultiplexer.Viagens;
+import Demultiplexer.ClassesSerializable.Viagens;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class ListaVoosPossiveis implements OperacaoI{

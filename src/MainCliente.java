@@ -1,9 +1,8 @@
-import DataLayer.Reservas;
 import Demultiplexer.Cliente;
 import Demultiplexer.Demultiplexer;
 import Demultiplexer.Exceptions.ServerIsClosedException;
 import Demultiplexer.TaggedConnection;
-import Demultiplexer.Viagens;
+import Demultiplexer.ClassesSerializable.Viagens;
 import UI.Menu;
 import UI.MenuInput;
 
