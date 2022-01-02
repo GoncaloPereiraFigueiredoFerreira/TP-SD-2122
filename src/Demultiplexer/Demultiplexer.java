@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -40,7 +39,7 @@ public class Demultiplexer {
     private IOException ioe            = null;
     private boolean keepDemultiplexing = true;
     private Map<Integer, Entry> queues = new HashMap<>();
-    private ReentrantLock rtlock       = new ReentrantLock();
+    private ReentrantLock rtlock       = new ReentrantLock(true);
 
     public Demultiplexer(TaggedConnection tc) throws IOException {
         this.tc = tc;
@@ -75,11 +74,12 @@ public class Demultiplexer {
 
                 //TODO - Perguntar ao professor
                 //Thread.yield();
-                try {
+                //Usar fair version??
+                /*try {
                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }
+                }*/
             }
 
             try { tc.close(); }
