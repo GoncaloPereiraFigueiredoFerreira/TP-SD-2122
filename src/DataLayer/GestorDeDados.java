@@ -206,13 +206,19 @@ public class GestorDeDados {
 			if (dataReserva == null) return null;
 
 			viagensLock.lock();
-
+			usersLock.lock();
 		} finally { voosRwLock.readLock().unlock(); }
 
-		//Regista a reserva da viagem
-		try { return addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
-		finally { viagensLock.unlock(); }
+		Integer idReserva;
+		try {
+			//Regista a reserva da viagem
+			try { idReserva = addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
+			finally { viagensLock.unlock(); }
 
+			//Adiciona o id da reserva à colecao do utilizador
+			utilizadores.get(idUtilizador).addIdReserva(idReserva);
+		} finally { usersLock.unlock(); }
+		return idReserva;
 	}
 
 
@@ -226,16 +232,27 @@ public class GestorDeDados {
 		Viagem viagem;
 
 		try {
-			viagensLock.lock();
+			usersLock.lock();
 
-			viagem = viagens.get(idReserva);
+			//Verifica existencia do utilizador e se o identificador da reserva pertence à colecao deste
+			Utilizador u = utilizadores.get(idUtilizador);
+			if(u == null || !u.removeIdReserva(idReserva)) return false;
 
-			if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador) || isDayClosed(viagem.getData())) return false;
+			try {
+				viagensLock.lock();
 
-			viagens.remove(idReserva);
+				//Remove a reserva
+				viagem = viagens.get(idReserva);
 
-			voosRwLock.readLock().lock();
-		}finally { viagensLock.unlock(); }
+				if(viagem == null || !viagem.getIdUtilizador().equals(idUtilizador) || isDayClosed(viagem.getData())) return false;
+
+				viagens.remove(idReserva);
+
+				voosRwLock.readLock().lock();
+
+			} finally { viagensLock.unlock(); }
+
+		}finally { usersLock.unlock(); }
 
 		try {
 			for(String idVoo : viagem.getColecaoVoos())
@@ -243,6 +260,25 @@ public class GestorDeDados {
 		} finally { voosRwLock.readLock().unlock(); }
 
 		return true;
+	}
+
+	/**
+	 * @param idUtilizador Identificador do utilizador do qual se pretende verificar a lista de viagens
+	 * @return null se o utilizador não existir, ou uma colecao com todas as reservas do utilizador.
+	 */
+	public Collection<Viagem> listaViagensUtilizador(String idUtilizador){
+		Collection<Integer> idsReservas = null;
+
+		try {
+			usersLock.lock();
+			Utilizador u = utilizadores.get(idUtilizador);
+			if(u == null) return null;
+			idsReservas = u.getIdsReserva();
+			viagensLock.lock();
+		} finally { usersLock.unlock(); }
+
+		try { return idsReservas.stream().map(id -> viagens.get(id).clone()).collect(Collectors.toList()); }
+		finally { viagensLock.unlock(); }
 	}
 
 	/**

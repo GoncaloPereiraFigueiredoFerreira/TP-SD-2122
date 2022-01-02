@@ -26,6 +26,16 @@ public class Viagem {
 		this.data 	   	  = data;
 	}
 
+	public Viagem(Viagem viagem){
+		this.idReserva 	  = viagem.idReserva;
+		this.idUtilizador = viagem.idUtilizador;
+		this.data		  = viagem.data;
+		this.listaVoos    = new ArrayList<>(viagem.listaVoos);
+	}
+
+	public Viagem clone(){
+		return new Viagem(this);
+	}
 
 	// ****** Getters ******
 
