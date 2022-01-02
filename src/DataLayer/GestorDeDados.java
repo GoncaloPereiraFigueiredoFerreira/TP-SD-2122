@@ -145,7 +145,7 @@ public class GestorDeDados {
 	 * @throws numeroLocalizacoesInvalidoException Se o número de localizações fornecidas for menor ou igual a 1, ou se for superior a (MAXVOOS + 1).
 	 * @throws localizacoesInvalidasException Se não existir alguma das localizações fornecidas.
 	 */
-	public Integer fazRevervasViagem(String idUtilizador, List<String> localizacoes, LocalDate dataInicial, LocalDate dataFinal) throws numeroLocalizacoesInvalidoException, localizacoesInvalidasException {
+	public InformacaoSobreReserva fazRevervasViagem(String idUtilizador, List<String> localizacoes, LocalDate dataInicial, LocalDate dataFinal) throws numeroLocalizacoesInvalidoException, localizacoesInvalidasException {
 		List<Voo> voosOrdenados;
 		LocalDate data;
 		LocalDate dataReserva = null;
@@ -218,7 +218,8 @@ public class GestorDeDados {
 			//Adiciona o id da reserva à colecao do utilizador
 			utilizadores.get(idUtilizador).addIdReserva(idReserva);
 		} finally { usersLock.unlock(); }
-		return idReserva;
+
+		return new InformacaoSobreReserva(idReserva, dataReserva, localizacoes);
 	}
 
 
@@ -266,19 +267,47 @@ public class GestorDeDados {
 	 * @param idUtilizador Identificador do utilizador do qual se pretende verificar a lista de viagens
 	 * @return null se o utilizador não existir, ou uma colecao com todas as reservas do utilizador.
 	 */
-	public Collection<Viagem> listaViagensUtilizador(String idUtilizador){
+	public Collection<InformacaoSobreReserva> listaViagensUtilizador(String idUtilizador){
 		Collection<Integer> idsReservas;
+		Collection<Viagem> viagensUser;
 
 		try {
+			//Verifica existencia do utilizador e recolhe os ids de todas as reservas feitas por este
 			usersLock.lock();
 			Utilizador u = utilizadores.get(idUtilizador);
 			if(u == null) return null;
 			idsReservas = u.getIdsReserva();
-			viagensLock.lock();
+
+			//Encontra todas as viagens através do respetivo id
+			try {
+				viagensLock.lock();
+				viagensUser = idsReservas.stream().map(viagens::get).collect(Collectors.toList()); }
+			finally { viagensLock.unlock(); }
+
+			voosRwLock.readLock().lock();
 		} finally { usersLock.unlock(); }
 
-		try { return idsReservas.stream().map(id -> viagens.get(id).clone()).collect(Collectors.toList()); }
-		finally { viagensLock.unlock(); }
+		//Encontra as localizacoes pertencentes a cada uma das viagens e gera uma lista com as informacoes de cada reserva
+		try{
+			Collection<InformacaoSobreReserva> listaInformacoesReservas = new ArrayList<>();
+			for(Viagem v : viagensUser){
+				List<String> idsVoos = v.getColecaoVoos(),
+							 locais  = new ArrayList<>();
+
+				//Adiciona a origem e o destino do primeiro voo
+				Voo voo = voos.get(idsVoos.get(0));
+				locais.add(voo.getOrigem());
+				locais.add(voo.getDestino());
+
+				//Se houverem mais voos, basta ir buscar o destino de cada um
+				for(int i = 1; i < idsVoos.size() ; i++)
+					locais.add(voos.get(idsVoos.get(i)).getDestino());
+
+				listaInformacoesReservas.add(new InformacaoSobreReserva(v.getIdReserva(), v.getData(), locais));
+			}
+
+			return listaInformacoesReservas;
+		} finally { voosRwLock.readLock().unlock(); }
 	}
 
 	/**
