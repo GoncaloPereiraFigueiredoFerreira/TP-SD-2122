@@ -1,10 +1,15 @@
 package Demultiplexer;
 
+import DataLayer.Viagem;
+import Demultiplexer.ClassesSerializable.InformacaoSobreReserva;
 import Demultiplexer.ClassesSerializable.Viagens;
 import Demultiplexer.Exceptions.ServerIsClosedException;
+import Demultiplexer.Operacoes.ReservasUtilizador;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Cliente {
@@ -422,6 +427,45 @@ public class Cliente {
             }
             return viagens;  //se for null entao houve erro de conexão
         } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void sendDadosViagensUtilizador(int number,int tag) throws IOException,ServerIsClosedException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeUTF(utilizador);
+        oos.flush();
+
+        byte[] byteArray = baos.toByteArray();
+        m.send(number, tag, byteArray, false);
+
+        oos.close();
+        baos.close();
+    }
+
+    public Collection<InformacaoSobreReserva> listaReservasUtilizador(int number) throws ServerIsClosedException { //tag 9
+        try {
+            m.send(number,9,new byte[0],false);
+            Frame f = m.receive(number);
+            m.finishedReceivingMessages(number);
+
+            Collection<InformacaoSobreReserva> reservas = null;
+            if(f.getTag()==9) {
+                reservas= new ArrayList<>();
+                ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
+                ObjectInputStream ois = new ObjectInputStream(bais);
+
+                int size = ois.readInt();
+                for (int i=0;i<size;i++){
+                    reservas.add(InformacaoSobreReserva.deserialize(ois));
+                }
+
+                ois.close();
+                bais.close();
+            }
+            return reservas;  //se for null entao houve erro de conexão
+        } catch (IOException | ClassNotFoundException e) {
             return null;
         }
     }

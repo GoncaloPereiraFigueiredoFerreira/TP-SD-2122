@@ -18,6 +18,7 @@ public class ServerMain {
         operacoes.add(new ListaVoosPossiveis());
         operacoes.add(new CancelaReserva());
         operacoes.add(new ListaViagensEscalasSimples());
+        operacoes.add(new ReservasUtilizador());
 
         if(!s.loadServer(operacoes)){
             System.out.println("Erro ao dar load ao servidor");

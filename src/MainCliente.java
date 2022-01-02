@@ -501,6 +501,7 @@ public class MainCliente {
         }
     }
 
+
     private static void printRespostaPedido( String header, String resposta){
         try {
             printsLock.lock();
