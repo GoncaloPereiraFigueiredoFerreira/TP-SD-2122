@@ -52,17 +52,19 @@ public class Server extends Thread {
 
             while(running.get()) {
                 Socket s = ss.accept();
+                s.setSoTimeout(1000);
 
                 Runnable worker = () -> {
                     try {
                         TaggedConnection c = new TaggedConnection(s);
                         while (running.get()) {
                             Frame frame = c.receive();
-                            if(frame.getTag()==-1) {
-                                running.set(false);
-                                ss.close();
+                            if(frame != null) {
+                                if (frame.getTag() == -1) {
+                                    running.set(false);
+                                    ss.close();
+                                } else addPedido(c, frame);
                             }
-                            addPedido(c,frame);
                         }
                     } catch (IOException ignored) { }
                 };
@@ -72,7 +74,7 @@ public class Server extends Thread {
         }catch (SocketException se){
             System.out.println("Server Closed");
         } catch (IOException e) {
-                e.printStackTrace();
+            System.out.println("Erro de conexao");
         }
     }
 }

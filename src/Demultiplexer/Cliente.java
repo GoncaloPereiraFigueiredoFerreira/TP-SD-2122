@@ -1,5 +1,7 @@
 package Demultiplexer;
 
+import Demultiplexer.Exceptions.ServerIsClosedException;
+
 import java.io.*;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,16 +29,17 @@ public class Cliente {
         return rValue;
     }
 
-    public void fecharServidor(int number)  { //tag -1
+    public void fecharServidor(int number) throws ServerIsClosedException { //tag -1
         try {
             // Envia tag -1 para sinalizar fecho
             m.send(number, -1, new byte[0], true);
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void sendDadosCriaConta(int number, String username, String password, Boolean admin, int tag) throws IOException {
+    private void sendDadosCriaConta(int number, String username, String password, Boolean admin, int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -52,7 +55,7 @@ public class Cliente {
         baos.close();
     }
 
-    public int criaConta(int number, String username,String password,Boolean administrador) { //tag 0
+    public int criaConta(int number, String username,String password,Boolean administrador) throws ServerIsClosedException { //tag 0
         try {
             // Recebe uma confirmação de criação de conta
             sendDadosCriaConta(number,username,password,administrador,0);
@@ -62,7 +65,7 @@ public class Cliente {
         }  catch (IOException e) { return -2; }
     }
 
-    private void sendDadosLogin(int number, String username,String password, int tag) throws IOException {
+    private void sendDadosLogin(int number, String username,String password, int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -77,7 +80,7 @@ public class Cliente {
         baos.close();
     }
 
-    public int login(int number, String username,String password) { //tag 1
+    public int login(int number, String username,String password) throws ServerIsClosedException  { //tag 1
         try {
             // Envia uma password e um username
             sendDadosLogin(number,username,password,1);
@@ -95,7 +98,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosAddVoo(int number, String origem,String destino,int capacidade, int tag) throws IOException {
+    private void sendDadosAddVoo(int number, String origem,String destino,int capacidade, int tag) throws IOException, ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -111,7 +114,7 @@ public class Cliente {
         baos.close();
     }
 
-    public int addVoo(int number, String origem,String destino,int capacidade) { // tag 2
+    public int addVoo(int number, String origem,String destino,int capacidade) throws ServerIsClosedException { // tag 2
         try {
             // Envia uma origem destino e capacidade
             sendDadosAddVoo(number,origem,destino,capacidade,2);
@@ -123,7 +126,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosEncerraDia(int number, LocalDate dia,int tag) throws IOException {
+    private void sendDadosEncerraDia(int number, LocalDate dia,int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -137,7 +140,7 @@ public class Cliente {
         baos.close();
     }
 
-   public int encerraDia(int number, LocalDate dia) { // tag 3
+   public int encerraDia(int number, LocalDate dia) throws ServerIsClosedException { // tag 3
        try {
            sendDadosEncerraDia(number,dia,3);
            int confirmacao = confirmacao(m.receive(number));  //0 significa que o dia foi fechado, 1 caso contrário
@@ -149,7 +152,7 @@ public class Cliente {
    }
 
 
-    public List<List<String>> listaVoosPossiveis(int number) { //tag 4
+    public List<List<String>> listaVoosPossiveis(int number) throws ServerIsClosedException { //tag 4
         try {
             m.send(number, 4, new byte[0], false);
             Frame f = m.receive(number);
@@ -165,7 +168,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosViagensEscalas(int number, String origem, String destino, int tag) throws IOException {
+    private void sendDadosViagensEscalas(int number, String origem, String destino, int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -180,7 +183,7 @@ public class Cliente {
         baos.close();
     }
 
-    public List<List<String>> listaViagensEscalas(int number, String origem, String destino) { //tag 5
+    public List<List<String>> listaViagensEscalas(int number, String origem, String destino) throws ServerIsClosedException { //tag 5
         try {
             sendDadosViagensEscalas(number,origem,destino,5);
             Frame f = m.receive(number);
@@ -196,7 +199,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup,int tag) throws IOException {
+    private void sendDadosReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup,int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -216,7 +219,7 @@ public class Cliente {
         baos.close();
     }
 
-    public int fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) { //tag 6
+    public int fazReserva(int number, List<String> localizacoes, LocalDate dInf,LocalDate dSup) throws ServerIsClosedException { //tag 6
         try {
             sendDadosReserva(number,localizacoes,dInf,dSup,6);
 
@@ -243,7 +246,7 @@ public class Cliente {
         }
     }
 
-    private void sendDadosCancelaReserva(int number, Integer idReserva, int tag) throws IOException {
+    private void sendDadosCancelaReserva(int number, Integer idReserva, int tag) throws IOException,ServerIsClosedException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
 
@@ -259,7 +262,7 @@ public class Cliente {
         baos.close();
     }
 
-    public int cancelaReserva(int number, Integer idReserva) { //tag 7
+    public int cancelaReserva(int number, Integer idReserva) throws ServerIsClosedException { //tag 7
         try {
             sendDadosCancelaReserva(number, idReserva, 7);
             int confirmacao = confirmacao(m.receive(number));  //0 significa que a reserva foi removida, 1 id nao existe, 2 falha de segurança
@@ -270,7 +273,7 @@ public class Cliente {
         }
     }
 
-    public List<List<String>> listaViagensEscalasSimples(int number) { //tag 8
+    public List<List<String>> listaViagensEscalasSimples(int number) throws ServerIsClosedException { //tag 8
         try {
             m.send(number,8,new byte[0],false);
             Frame f = m.receive(number);

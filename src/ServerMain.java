@@ -1,11 +1,10 @@
-package Demultiplexer;
-
 import Demultiplexer.Operacoes.*;
+import Demultiplexer.Server;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerTeste {
+public class ServerMain {
     public static void main(String[] args) throws InterruptedException {
         Server s = new Server();
 
