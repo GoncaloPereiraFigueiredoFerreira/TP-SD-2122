@@ -146,7 +146,7 @@ public class GestorDeDados {
 	 * @throws localizacoesInvalidasException Se não existir alguma das localizações fornecidas.
 	 */
 	public InformacaoSobreReserva fazRevervasViagem(String idUtilizador, List<String> localizacoes, LocalDate dataInicial, LocalDate dataFinal) throws numeroLocalizacoesInvalidoException, localizacoesInvalidasException {
-		List<Voo> voosOrdenados;
+		List<Voo> voosNaoOrdenados, voosOrdenados;
 		LocalDate data;
 		LocalDate dataReserva = null;
 
@@ -154,7 +154,7 @@ public class GestorDeDados {
 		if (localizacoes.size() <= 1 || localizacoes.size() > MAXVOOS + 1)
 			throw new numeroLocalizacoesInvalidoException();
 
-		voosOrdenados = new ArrayList<>();
+		voosNaoOrdenados = new ArrayList<>();
 
 		try {
 			voosRwLock.readLock().lock();
@@ -167,8 +167,10 @@ public class GestorDeDados {
 				if (voo == null)
 					throw new localizacoesInvalidasException();
 
-				voosOrdenados.add(voo);
+				voosNaoOrdenados.add(voo);
 			}
+
+			voosOrdenados = new ArrayList<>(voosNaoOrdenados);
 			voosOrdenados.sort(null);
 
 			//Tenta efetuar as reservas
@@ -212,7 +214,7 @@ public class GestorDeDados {
 		Integer idReserva;
 		try {
 			//Regista a reserva da viagem
-			try { idReserva = addViagem(idUtilizador, voosOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
+			try { idReserva = addViagem(idUtilizador, voosNaoOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
 			finally { viagensLock.unlock(); }
 
 			//Adiciona o id da reserva à colecao do utilizador
