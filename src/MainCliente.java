@@ -58,7 +58,7 @@ public class MainCliente {
             System.out.println("Servidor offline.");
             return;
         }catch (IOException ioe){
-            System.out.println("Problema com o socket utilizado para a conexão.");
+            System.out.println("Problema com o socket utilizado para a conexao.");
             return;
         }
 
@@ -67,11 +67,12 @@ public class MainCliente {
         AtomicInteger nrPedido = new AtomicInteger(0);
 
         //Menu de autenticacao
-        Menu menuAutenticaco = new Menu("Menu de autenticacao", new String[]{"Registar cliente", "Registar adminstrador", "Autenticar"});
-        menuAutenticaco.setHandlerSaida(() -> flag.setValue(Flag.CLOSE_CLIENT));
-        menuAutenticaco.setHandler(1, () -> registarClienteHandler(nrPedido, cliente));
-        menuAutenticaco.setHandler(2, () -> registarAdminHandler(nrPedido, cliente));
-        menuAutenticaco.setHandler(3, () -> autenticarHandler(nrPedido, flag, cliente));
+        Menu menuAutenticao = new Menu("Menu de autenticacao", new String[]{"Registar cliente", "Registar adminstrador", "Autenticar"});
+        menuAutenticao.setHandlerSaida(() -> flag.setValue(Flag.CLOSE_CLIENT));
+        menuAutenticao.setHandler(1, () -> registarClienteHandler(nrPedido, cliente));
+        menuAutenticao.setHandler(2, () -> registarAdminHandler(nrPedido, cliente));
+        menuAutenticao.setHandler(3, () -> autenticarHandler(nrPedido, flag, cliente));
+        menuAutenticao.setLock(printsLock);
 
         //Menu de cliente
         Menu menuCliente = new Menu("Cliente", new String[]{"Reservar Viagem", "Cancelar Reserva de Viagem", "Listar Voos", "Listar Viagens", "Listar Viagens a partir de uma Origem ate um Destino", "Receber resposta de pedidos"});
@@ -82,26 +83,28 @@ public class MainCliente {
         menuCliente.setHandler(4, () -> listarViagensHandler(nrPedido, cliente));
         menuCliente.setHandler(5, () -> listarViagensRestritasHandler(nrPedido, cliente));
         menuCliente.setHandler(6, () -> {});
+        menuCliente.setLock(printsLock);
 
         //Menu de administrador
         Menu menuAdmin = new Menu("Administrador", new String[]{"Executar Operacoes de Cliente", "Inserir Novo Voo", "Encerrar um Dia","Fechar servidor"});
         menuAdmin.setHandlerSaida(() -> flag.setValue(Flag.NOT_AUTHENTICATED));
-        menuAdmin.setHandler(1, () -> { while (runMenuOneTime(menuCliente) != 0); });
+        menuAdmin.setHandler(1, menuCliente::run);
         menuAdmin.setHandler(2, () -> inserirNovoVooHandler(nrPedido, cliente));
         menuAdmin.setHandler(3, () -> encerrarDiaHandler(nrPedido, flag,cliente));
         menuAdmin.setHandler(4, () -> fecharServidorHandler(nrPedido, cliente));
+        menuAdmin.setLock(printsLock);
 
         while (!flag.getValue().equals(Flag.CLOSE_CLIENT)) {
 
             //Executa menu de autenticacao
             while (flag.getValue().equals(Flag.NOT_AUTHENTICATED))
-                runMenuOneTime(menuAutenticaco);
+                menuAutenticao.runOneTime();
 
             if (flag.getValue().equals(Flag.CLIENT_LOGGED_IN))
-                while (runMenuOneTime(menuCliente) != 0);
+                menuCliente.run();
 
             else if (flag.getValue().equals(Flag.ADMIN_LOGGED_IN))
-                while (runMenuOneTime(menuAdmin) != 0);
+                menuAdmin.run();
 
             if(flag.getValue().equals(Flag.SERVER_CLOSED)) {
                 flag.setValue(Flag.NOT_AUTHENTICATED);
@@ -133,7 +136,7 @@ public class MainCliente {
                 if (flagInterna == 0) printRespostaPedido(headerPedido, "Cliente criado com sucesso");
                 else if (flagInterna == 1) printRespostaPedido(headerPedido, "Falha ao criar cliente");
                 else if (flagInterna == -2)
-                    printRespostaPedido(headerPedido, "Erro de conexão. Tente novamente. Se o problema persistir o servidor pode estar offline.");
+                    printRespostaPedido(headerPedido, "Erro de conexao. Tente novamente. Se o problema persistir o servidor pode estar offline.");
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
             }
@@ -159,7 +162,7 @@ public class MainCliente {
                 int flagInterna = cliente.criaConta(nr, m1.getOpcao(), m2.getOpcao(), true);
                 if (flagInterna == 0) printRespostaPedido(headerPedido, "Administrador criado com sucesso");
                 else if (flagInterna == 1) printRespostaPedido(headerPedido, "Falha ao criar administrador");
-                else if (flagInterna == -2) printRespostaPedido(headerPedido, "Erro de conexão. Tente novamente. Se o problema persistir o servidor pode estar offline.");
+                else if (flagInterna == -2) printRespostaPedido(headerPedido, "Erro de conexao. Tente novamente. Se o problema persistir o servidor pode estar offline.");
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
             }
@@ -192,7 +195,7 @@ public class MainCliente {
                     printRespostaPedido(headerPedido, "Administrador logado com sucesso");
                     flag.setValue(Flag.ADMIN_LOGGED_IN);
                 } else if (flagInterna == -2)
-                    printRespostaPedido(headerPedido, "Erro de conexão. Tente novamente. Se o problema persistir o servidor pode estar offline.");
+                    printRespostaPedido(headerPedido, "Erro de conexao. Tente novamente. Se o problema persistir o servidor pode estar offline.");
 
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
@@ -220,10 +223,11 @@ public class MainCliente {
 
             Integer nrLocais = null;
 
-            while (nrLocais == null) {
+            while (nrLocais == null || nrLocais < 2) {
                 try {
                     m.executa();
                     nrLocais = Integer.parseInt(m.getOpcao());
+                    if(nrLocais < 2) System.out.println("Por favor insira um número igual ou superior a 2.");
                 } catch (NumberFormatException nfe) {
                     System.out.println("Por favor insira um numero inteiro.");
                 }
@@ -263,19 +267,22 @@ public class MainCliente {
         new Thread(() -> {
             try {
                 int internaFlag = cliente.fazReserva(nr, locais, dataInicialF, dataFinalF);
+
+                String headerPedido = "Reserva de viagem entre " + locais.get(0) + " e " + locais.get(locais.size() - 1);
+
                 if (internaFlag >= 0)
-                    System.out.println("ID da reserva: " + internaFlag);
+                    printRespostaPedido(headerPedido, "ID da reserva: " + internaFlag);
                 else if (internaFlag == -1)
-                    System.out.println("Falha na verificacao de seguranca");
+                    printRespostaPedido(headerPedido, "Falha na verificacao de seguranca");
                 else if (internaFlag == -2)
-                    System.out.println("Localizacoes inseridas são inválidas.");
+                    printRespostaPedido(headerPedido, "Localizacoes inseridas sao invalidas.");
                 else if (internaFlag == -3)
-                    System.out.println("Numero de localizacoes inserido é invalido.");
+                    printRespostaPedido(headerPedido, "Numero de localizacoes inserido é invalido.");
                 else if (internaFlag == -4)
-                    System.out.println("Utilizador ja possui uma reserva para este dia ou nao existem lugares disponiveis.");
-                else System.out.println("Error");
+                    printRespostaPedido(headerPedido, "Nao foi possivel efetuar a reserva. \nRazoes pela qual nao foi possivel (Pode ser uma combinacao) :\n -> O utilizador ja possui uma reserva para todos os dias pertencentes ao intervalo\n -> Nao existem lugares disponiveis \n -> Os dias pertencentes ao intervalo estao fechados");
+                else printRespostaPedido(headerPedido, "Error");
             }catch (ServerIsClosedException sice){
-                System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
+                System.out.println("\n\n\nO Servidor encontra-se fechado. Tente novamente mais tarde!\n");
             }
         }).start();
     }
@@ -316,7 +323,7 @@ public class MainCliente {
                 else if (flagInterna == 2)
                     printRespostaPedido(headerPedido, "Falha de seguranca, tente sair da conta e voltar a fazer login");
                 else if (flagInterna == -2)
-                    printRespostaPedido(headerPedido, "Erro de conexão. Tente novamente. Se o problema persistir o servidor pode estar offline.");
+                    printRespostaPedido(headerPedido, "Erro de conexao. Tente novamente. Se o problema persistir o servidor pode estar offline.");
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
             }
@@ -353,7 +360,11 @@ public class MainCliente {
         //Atualizacao do número de pedido
         int nr = nrPedido.getAndIncrement();
 
-        printRespostaPedido("A carregar viagens possiveis", null);
+        try {
+            printsLock.lock();
+            System.out.println("A carregar viagens possiveis");
+        }
+        finally { printsLock.unlock(); }
 
         new Thread(() -> {
 
@@ -439,7 +450,7 @@ public class MainCliente {
                 int flagInterna = cliente.addVoo(nr, m1.getOpcao(), m2.getOpcao(), n);
                 if (flagInterna == 0) System.out.println("Voo adicionado com sucesso");
                 else if (flagInterna == 1) System.out.println("Falha ao adicionar voo");
-                else if (flagInterna == -2) System.out.println("Erro de conexão. Tente novamente. Se o problema persistir o servidor pode estar offline.");
+                else if (flagInterna == -2) System.out.println("Erro de conexao. Tente novamente. Se o problema persistir o servidor pode estar offline.");
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
             }
@@ -472,7 +483,7 @@ public class MainCliente {
                 if (flagInterna == 0) System.out.println("Dia fechado com sucesso");
                 else if (flagInterna == 1) System.out.println("Falha fechar o dia");
                 else if (flagInterna == -2)
-                    System.out.println("Erro de conexão. Tente novamente. Se o problema persistir, o servidor pode estar offline.");
+                    System.out.println("Erro de conexao. Tente novamente. Se o problema persistir, o servidor pode estar offline.");
             }catch (ServerIsClosedException sice){
                 System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
             }
@@ -488,19 +499,6 @@ public class MainCliente {
         }catch (ServerIsClosedException sice){
             System.out.println("O Servidor encontra-se fechado. Tente novamente mais tarde!");
         }
-    }
-
-
-    // Metodos auxiliares dos prints que controlam a concorrência
-    private static int runMenuOneTime(Menu menu){
-        /*try { Thread.sleep(50); }
-        catch (InterruptedException ignored) {}*/
-
-        try {
-            printsLock.lock();
-            menu.runOneTime();
-            return menu.getLastOption();
-        } finally { printsLock.unlock(); }
     }
 
     private static void printRespostaPedido( String header, String resposta){

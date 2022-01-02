@@ -267,7 +267,7 @@ public class GestorDeDados {
 	 * @return null se o utilizador não existir, ou uma colecao com todas as reservas do utilizador.
 	 */
 	public Collection<Viagem> listaViagensUtilizador(String idUtilizador){
-		Collection<Integer> idsReservas = null;
+		Collection<Integer> idsReservas;
 
 		try {
 			usersLock.lock();

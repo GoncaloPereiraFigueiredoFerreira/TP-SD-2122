@@ -1,6 +1,7 @@
 package UI;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Esta classe implementa um Menu em modo texto.
@@ -11,6 +12,7 @@ import java.util.*;
 public class Menu {
     String nome;
     private int opcao; //Guarda a última opcao usada
+    private ReentrantLock rl = null;
 
     // Interfaces auxiliares
 
@@ -69,6 +71,10 @@ public class Menu {
         });
     }
 
+    public void setLock(ReentrantLock reentrantLock){
+        this.rl = reentrantLock;
+    }
+
     // Métodos de instância
 
     /**
@@ -79,15 +85,21 @@ public class Menu {
     public void run() {
         int op;
         do {
-            show();
-            op = readOption();
-            // testar pré-condicao
-            if (op>0 && !this.disponivel.get(op-1).validate()) {
-                System.out.println("Opcao indisponível! Tente novamente.");
-            } else if (op>0) {
+            try {
+                if(rl != null) rl.lock();
+                show();
+                op = readOption();
+                // testar pré-condicao
+                if (op > 0 && !this.disponivel.get(op - 1).validate()) {
+                    System.out.println("Opcao indisponível! Tente novamente.");
+                }
+            }finally { if(rl != null) rl.unlock(); }
+
+            if (op > 0) {
                 // executar handler
-                this.handlers.get(op-1).execute();
+                this.handlers.get(op - 1).execute();
             }
+
         } while (op != 0);
 
         if(handlerSaida != null)
@@ -99,15 +111,21 @@ public class Menu {
      */
     public void runOneTime() {
         do {
-            show();
-            this.opcao = readOption();
-            // testar pré-condicao
-            if (this.opcao>0 && !this.disponivel.get(this.opcao-1).validate()) {
-                System.out.println("Opcao indisponível! Tente novamente.");
-            } else if (this.opcao>0) {
+            try {
+                if(rl != null) rl.lock();
+                show();
+                this.opcao = readOption();
+                // testar pré-condicao
+                if (this.opcao > 0 && !this.disponivel.get(this.opcao - 1).validate()) {
+                    System.out.println("Opcao indisponível! Tente novamente.");
+                }
+            }finally { if(rl != null) rl.unlock(); }
+
+            if (this.opcao > 0) {
                 // executar handler
-                this.handlers.get(this.opcao-1).execute();
+                this.handlers.get(this.opcao - 1).execute();
             }
+
         } while (this.opcao == -1);
 
         if(this.opcao == 0 && handlerSaida != null)
