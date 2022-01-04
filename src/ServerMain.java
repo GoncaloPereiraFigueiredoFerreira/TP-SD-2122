@@ -1,5 +1,5 @@
-import Demultiplexer.Operacoes.*;
-import Demultiplexer.Server;
+import LogicLayer.Servidor.Operacoes.*;
+import LogicLayer.Servidor.Server;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package Demultiplexer;
+package LogicLayer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -8,11 +8,11 @@ import java.net.SocketTimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class TaggedConnection implements AutoCloseable {
-    private Socket socket;
-    private DataOutputStream dos;
-    private DataInputStream dis;
-    private ReentrantLock rLock = new ReentrantLock();
-    private ReentrantLock wLock = new ReentrantLock();
+    private final Socket socket;
+    private final DataOutputStream dos;
+    private final DataInputStream dis;
+    private final ReentrantLock rLock = new ReentrantLock();
+    private final ReentrantLock wLock = new ReentrantLock();
 
     public TaggedConnection(Socket socket) throws IOException {
         this.socket = socket;

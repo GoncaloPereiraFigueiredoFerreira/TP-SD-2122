@@ -3,8 +3,8 @@ package UI;
 import java.util.Scanner;
 
 public class MenuInput {
-    private String title;
-    private String text;
+    private final String title;
+    private final String text;
     private String op;
 
 
@@ -30,7 +30,6 @@ public class MenuInput {
         Scanner is = new Scanner(System.in);
 
         op = is.nextLine();
-        System.out.println("");
 
         return op;
     }

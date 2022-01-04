@@ -1,8 +1,8 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

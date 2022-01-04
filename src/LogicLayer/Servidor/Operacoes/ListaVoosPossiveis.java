@@ -1,22 +1,22 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
+import LogicLayer.ClassesSerializable.Viagens;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.util.List;
 
-public class Login implements OperacaoI{
+public class ListaVoosPossiveis implements OperacaoI{
     Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
-    int tag = 1;
+    int tag=4;
 
-    public Login(){}
+    public ListaVoosPossiveis(){}
 
-    public Login(TaggedConnection tc,Frame f,GestorDeDados gestorDeDados){
+    public ListaVoosPossiveis(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados){
         this.f= f;
         this.tc= tc;
         this.gestorDeDados=gestorDeDados;
@@ -38,24 +38,15 @@ public class Login implements OperacaoI{
      */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new Login(tc,f,gestorDeDados));
+        Thread t = new Thread(new ListaVoosPossiveis(tc,f,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
-            ObjectInputStream ois = new ObjectInputStream(bais);
+            List<List<String>> viagens = gestorDeDados.listaVoosExistentes();
 
-            String username = ois.readUTF();
-            String password = ois.readUTF();
-
-            ois.close();
-            bais.close();
-
-            int logado = gestorDeDados.verificaCredenciais(username,password);
-
-            sendConfirmacao(tc,logado,tag,f.getNumber());
+            tc.send(f.getNumber(),tag,(Viagens.serialize(viagens)));
         } catch (IOException e) {
             e.printStackTrace();
         }

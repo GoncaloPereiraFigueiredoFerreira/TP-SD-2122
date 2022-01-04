@@ -1,4 +1,4 @@
-package Demultiplexer;
+package LogicLayer;
 
 public class Frame {
     private final int number;

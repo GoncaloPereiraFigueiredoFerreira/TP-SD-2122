@@ -1,23 +1,20 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.GestorDeDados;
-import DataLayer.InformacaoSobreReserva;
-import DataLayer.Viagem;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
 
 import java.io.*;
-import java.util.Collection;
 
-public class ReservasUtilizador implements OperacaoI{
+public class CriaConta implements OperacaoI{
     Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
-    int tag = 9;
+    int tag = 0;
 
-    public ReservasUtilizador(){}
+    public CriaConta(){}
 
-    public ReservasUtilizador(TaggedConnection tc, Frame f, GestorDeDados gestorDeDados){
+    public CriaConta(TaggedConnection tc,Frame f,GestorDeDados gestorDeDados){
         this.f=f;
         this.tc= tc;
         this.gestorDeDados=gestorDeDados;
@@ -39,37 +36,26 @@ public class ReservasUtilizador implements OperacaoI{
      */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new ReservasUtilizador(tc,f,gestorDeDados));
+        Thread t = new Thread(new CriaConta(tc,f,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-
             ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
 
-            String utilizador = ois.readUTF();
+            String username = ois.readUTF();
+            String password = ois.readUTF();
+            boolean admin = ois.readBoolean();
 
             ois.close();
             bais.close();
 
-            Collection<InformacaoSobreReserva> reservas= gestorDeDados.listaViagensUtilizador(utilizador);
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-
-            oos.writeInt(reservas.size());
-            for (InformacaoSobreReserva reserva:reservas){
-                reserva.serialize(oos);
-            }
-            oos.flush();
-
-            byte[] byteArray = baos.toByteArray();
-            tc.send(f.getNumber(),tag, byteArray);
-
-            oos.close();
-            baos.close();
+            boolean adicionado = gestorDeDados.addUtilizador(username,password,admin);
+            if (adicionado)
+                sendConfirmacao(tc,0,tag,f.getNumber()); //Conta criada com sucesso
+            else sendConfirmacao(tc,1,tag,f.getNumber()); //Conta criada com sucesso
 
         } catch (IOException e) {
             e.printStackTrace();

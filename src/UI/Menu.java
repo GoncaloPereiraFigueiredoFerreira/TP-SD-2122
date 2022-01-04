@@ -18,23 +18,23 @@ public class Menu {
 
     /** Functional interface para handlers. */
     public interface Handler {  // método de tratamento
-        public void execute();
+        void execute();
     }
 
     /** Functional interface para pre-condicoes. */
     public interface PreCondition {  // Predicate ?
-        public boolean validate();
+        boolean validate();
     }
 
     // Varíavel de classe para suportar leitura
 
-    private static Scanner is = new Scanner(System.in);
+    private static final Scanner is = new Scanner(System.in);
 
     // Variaveis de instância
 
-    private List<String> opcoes;            // Lista de opcões
-    private List<PreCondition> disponivel;  // Lista de pré-condicões
-    private List<Handler> handlers;         // Lista de handlers
+    private final List<String> opcoes;            // Lista de opcões
+    private final List<PreCondition> disponivel;  // Lista de pré-condicões
+    private final List<Handler> handlers;         // Lista de handlers
     private Handler handlerSaida;
 
     // Construtor
@@ -61,7 +61,7 @@ public class Menu {
      * @param opcoes Lista de opcoes do menu
      */
     public Menu(String nome, String[] opcoes) {
-        this.nome = "Menu";
+        this.nome = nome;
         this.opcoes = Arrays.asList(opcoes);
         this.disponivel = new ArrayList<>();
         this.handlers = new ArrayList<>();

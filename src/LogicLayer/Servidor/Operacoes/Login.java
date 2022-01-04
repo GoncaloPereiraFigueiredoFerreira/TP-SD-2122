@@ -1,21 +1,23 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
-public class CancelaReserva implements OperacaoI{
+public class Login implements OperacaoI{
     Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
-    int tag = 7;
+    int tag = 1;
 
-    public CancelaReserva(){}
+    public Login(){}
 
-    public CancelaReserva(TaggedConnection tc,Frame f,GestorDeDados gestorDeDados){
-        this.f = f;
+    public Login(TaggedConnection tc,Frame f,GestorDeDados gestorDeDados){
+        this.f= f;
         this.tc= tc;
         this.gestorDeDados=gestorDeDados;
     }
@@ -36,7 +38,7 @@ public class CancelaReserva implements OperacaoI{
      */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new CancelaReserva(tc,f,gestorDeDados));
+        Thread t = new Thread(new Login(tc,f,gestorDeDados));
         t.start();
     }
 
@@ -45,24 +47,15 @@ public class CancelaReserva implements OperacaoI{
             ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
             ObjectInputStream ois = new ObjectInputStream(bais);
 
-            int idReserva = ois.readInt();
-            String utilizador = ois.readUTF();
+            String username = ois.readUTF();
             String password = ois.readUTF();
 
             ois.close();
             bais.close();
 
-            int logado = gestorDeDados.verificaCredenciais(utilizador,password);
-            boolean adicionado=false;
-            if (logado==1||logado==0)
-                adicionado = gestorDeDados.removeReservasEViagem(utilizador,idReserva);
+            int logado = gestorDeDados.verificaCredenciais(username,password);
 
-            if (adicionado)
-                sendConfirmacao(tc,0,tag,f.getNumber()); //Removido
-            else if(logado==1||logado==0)
-                sendConfirmacao(tc,1,tag,f.getNumber()); //ID nao existe
-            else sendConfirmacao(tc,2,tag,f.getNumber()); //Falha de segurança
-
+            sendConfirmacao(tc,logado,tag,f.getNumber());
         } catch (IOException e) {
             e.printStackTrace();
         }

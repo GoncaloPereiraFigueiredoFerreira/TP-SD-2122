@@ -1,11 +1,10 @@
-package Demultiplexer;
+package LogicLayer.Cliente;
 
 import DataLayer.InformacaoSobreReserva;
-import DataLayer.Viagem;
-import Demultiplexer.ClassesSerializable.Viagens;
-import Demultiplexer.Exceptions.ReservaFailException;
-import Demultiplexer.Exceptions.ServerIsClosedException;
-import Demultiplexer.Operacoes.ReservasUtilizador;
+import LogicLayer.ClassesSerializable.Viagens;
+import LogicLayer.Cliente.Exceptions.ReservaFailException;
+import LogicLayer.Cliente.Exceptions.ServerIsClosedException;
+import LogicLayer.Frame;
 
 import java.io.*;
 import java.time.LocalDate;

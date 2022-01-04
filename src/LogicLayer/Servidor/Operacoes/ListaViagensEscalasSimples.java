@@ -1,24 +1,21 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
-import Demultiplexer.ClassesSerializable.Viagens;
-
-import java.io.ByteArrayInputStream;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
+import LogicLayer.ClassesSerializable.Viagens;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.List;
 
-public class ListaViagensEscalas implements OperacaoI{
+public class ListaViagensEscalasSimples implements OperacaoI{
     Frame f;
     TaggedConnection tc;
     GestorDeDados gestorDeDados;
-    int tag=5;
+    int tag=8;
 
-    public ListaViagensEscalas(){}
+    public ListaViagensEscalasSimples(){}
 
-    public ListaViagensEscalas(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados){
+    public ListaViagensEscalasSimples(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados){
         this.f= f;
         this.tc= tc;
         this.gestorDeDados=gestorDeDados;
@@ -40,23 +37,13 @@ public class ListaViagensEscalas implements OperacaoI{
      */
     @Override
     public void newRun(TaggedConnection tc,Frame f, GestorDeDados gestorDeDados) {
-        Thread t = new Thread(new ListaViagensEscalas(tc,f,gestorDeDados));
+        Thread t = new Thread(new ListaViagensEscalasSimples(tc,f,gestorDeDados));
         t.start();
     }
 
     public void run() {
         try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(f.getData());
-            ObjectInputStream ois = new ObjectInputStream(bais);
-
-            String origem = ois.readUTF();
-            String destino = ois.readUTF();
-
-            ois.close();
-            bais.close();
-
-            List<List<String>> viagens = gestorDeDados.listaViagensExistentes(origem,destino);
-
+            List<List<String>> viagens = gestorDeDados.listaViagensExistentes();
             tc.send(f.getNumber(),tag,(Viagens.serialize(viagens)));
         } catch (IOException e) {
             e.printStackTrace();

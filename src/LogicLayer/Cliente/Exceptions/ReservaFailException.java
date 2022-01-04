@@ -1,4 +1,4 @@
-package Demultiplexer.Exceptions;
+package LogicLayer.Cliente.Exceptions;
 
 public class ReservaFailException extends Exception{
     public ReservaFailException(){

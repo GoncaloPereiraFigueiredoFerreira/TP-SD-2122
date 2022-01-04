@@ -1,7 +1,9 @@
-package Demultiplexer;
+package LogicLayer.Servidor;
 
 import DataLayer.GestorDeDados;
-import Demultiplexer.Operacoes.OperacaoI;
+import LogicLayer.Frame;
+import LogicLayer.Servidor.Operacoes.OperacaoI;
+import LogicLayer.TaggedConnection;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,10 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Server extends Thread {
-    private Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
-    private GestorDeDados gestorDeDados= new GestorDeDados();
+    private final Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
+    private final GestorDeDados gestorDeDados= new GestorDeDados();
 
     /**
      * Verifica se a lista de operacoes é valida
@@ -46,7 +49,7 @@ public class Server extends Thread {
      * @return true caso a tag corresponda a uma operacao do servidor e tenha sido criada uma thread;
      *         false caso contrario
      */
-    public boolean addPedido(TaggedConnection tg,Frame f) throws IOException {
+    public boolean addPedido(TaggedConnection tg, Frame f) throws IOException {
         int tag = f.getTag();
         if(tag!=-1) {  // if tag == -1 then close
             OperacaoI operacao = gestorDeOperacoes.get(f.getTag());
@@ -67,15 +70,21 @@ public class Server extends Thread {
         try {
             ServerSocket ss = new ServerSocket(8888);
             AtomicBoolean running= new AtomicBoolean(true);
+            ReentrantLock rl = new ReentrantLock();
 
+            rl.lock();
             while(running.get()) {
+                rl.unlock();
+
                 Socket s = ss.accept();
                 s.setSoTimeout(1000);
 
                 Runnable worker = () -> {
                     try {
                         TaggedConnection c = new TaggedConnection(s);
+                        rl.lock();
                         while (running.get()) {
+                            rl.unlock();
                             Frame frame = c.receive();
                             if(frame != null) {
                                 if (frame.getTag() == -1) {
@@ -83,11 +92,16 @@ public class Server extends Thread {
                                     ss.close();
                                 } else addPedido(c, frame);
                             }
+                            rl.lock();
                         }
+                        rl.unlock();
                     } catch (IOException ignored) { }
                 };
                 new Thread(worker).start();
+
+                rl.lock();
             }
+            rl.unlock();
 
         }catch (SocketException se){
             System.out.println("Server Closed");

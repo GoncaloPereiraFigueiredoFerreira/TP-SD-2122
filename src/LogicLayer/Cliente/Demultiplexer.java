@@ -1,6 +1,8 @@
-package Demultiplexer;
+package LogicLayer.Cliente;
 
-import Demultiplexer.Exceptions.ServerIsClosedException;
+import LogicLayer.Cliente.Exceptions.ServerIsClosedException;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
 
 import java.io.IOException;
 import java.net.SocketException;

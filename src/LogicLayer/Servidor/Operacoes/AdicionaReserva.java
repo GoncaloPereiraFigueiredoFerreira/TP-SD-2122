@@ -1,11 +1,11 @@
-package Demultiplexer.Operacoes;
+package LogicLayer.Servidor.Operacoes;
 
 import DataLayer.Exceptions.localizacoesInvalidasException;
 import DataLayer.Exceptions.numeroLocalizacoesInvalidoException;
 import DataLayer.GestorDeDados;
 import DataLayer.InformacaoSobreReserva;
-import Demultiplexer.Frame;
-import Demultiplexer.TaggedConnection;
+import LogicLayer.Frame;
+import LogicLayer.TaggedConnection;
 
 import java.io.*;
 import java.time.LocalDate;
