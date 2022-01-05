@@ -88,7 +88,9 @@ public class Server extends Thread {
                             Frame frame = c.receive();
                             if(frame != null) {
                                 if (frame.getTag() == -1) {
+                                    rl.lock();
                                     running.set(false);
+                                    rl.unlock();
                                     ss.close();
                                 } else addPedido(c, frame);
                             }
