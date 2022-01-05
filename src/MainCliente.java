@@ -52,18 +52,39 @@ public class MainCliente {
         Socket s;
         Demultiplexer m;
 
-        try {
-            s = new Socket("localhost", 8888);
-            s.setSoTimeout(100);
-            m = new Demultiplexer(new TaggedConnection(s));
-            m.start();
-        }catch (UnknownHostException uhe){
-            System.out.println("Servidor offline.");
-            return;
-        }catch (IOException ioe){
-            System.out.println("Problema com o socket utilizado para a conexao.");
-            return;
+        MenuInput localOuEspecifico = new MenuInput("Insira \"localhost\" para ligar ao servidor " +
+                "no localhost ou insira o endereco do servidor a que se pretende connectar:","Opcao:");
+        localOuEspecifico.executa();
+        String endereco = localOuEspecifico.getOpcao();
+
+        if(endereco.equals("localhost")) {
+            try {
+                s = new Socket("localhost", 8888);
+                s.setSoTimeout(100);
+                m = new Demultiplexer(new TaggedConnection(s));
+                m.start();
+            } catch (UnknownHostException uhe) {
+                System.out.println("Servidor offline.");
+                return;
+            } catch (IOException ioe) {
+                System.out.println("Problema com o socket utilizado para a conexao.");
+                return;
+            }
+        }else {
+            try {
+                s = new Socket(endereco, 8888);
+                s.setSoTimeout(100);
+                m = new Demultiplexer(new TaggedConnection(s));
+                m.start();
+            } catch (UnknownHostException uhe) {
+                System.out.println("Servidor offline.");
+                return;
+            } catch (IOException ioe) {
+                System.out.println("Problema com o socket utilizado para a conexao.");
+                return;
+            }
         }
+
 
         Flag flag              = new Flag();
         Cliente cliente        = new Cliente(m);
