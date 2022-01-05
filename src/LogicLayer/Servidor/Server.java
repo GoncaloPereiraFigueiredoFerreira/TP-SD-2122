@@ -13,7 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Server extends Thread {
     private final Map<Integer,OperacaoI> gestorDeOperacoes = new HashMap<>();
@@ -70,11 +72,9 @@ public class Server extends Thread {
         try {
             ServerSocket ss = new ServerSocket(8888);
             AtomicBoolean running= new AtomicBoolean(true);
-            ReentrantLock rl = new ReentrantLock();
+            ReadWriteLock rl = new ReentrantReadWriteLock();
 
-            rl.lock();
-            while(running.get()) {
-                rl.unlock();
+            while(getRunning(running,rl)) {
 
                 Socket s = ss.accept();
                 s.setSoTimeout(1000);
@@ -82,33 +82,38 @@ public class Server extends Thread {
                 Runnable worker = () -> {
                     try {
                         TaggedConnection c = new TaggedConnection(s);
-                        rl.lock();
-                        while (running.get()) {
-                            rl.unlock();
+                        while (getRunning(running,rl)) {
                             Frame frame = c.receive();
                             if(frame != null) {
                                 if (frame.getTag() == -1) {
-                                    rl.lock();
-                                    running.set(false);
-                                    rl.unlock();
-                                    ss.close();
+                                    try {
+                                        rl.writeLock().lock();
+                                        running.set(false);
+                                        ss.close();
+                                    }finally {
+                                        rl.writeLock().unlock();
+                                    }
                                 } else addPedido(c, frame);
                             }
-                            rl.lock();
                         }
-                        rl.unlock();
                     } catch (IOException ignored) { }
                 };
                 new Thread(worker).start();
-
-                rl.lock();
             }
-            rl.unlock();
 
         }catch (SocketException se){
             System.out.println("Server Closed");
         } catch (IOException e) {
             System.out.println("Erro de conexao");
+        }
+    }
+
+    public boolean getRunning(AtomicBoolean running,ReadWriteLock rl){
+        try {
+            rl.readLock().lock();
+            return running.get();
+        }finally {
+            rl.readLock().unlock();
         }
     }
 }
