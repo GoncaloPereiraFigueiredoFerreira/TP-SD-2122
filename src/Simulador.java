@@ -50,6 +50,7 @@ public class Simulador {
                 System.out.println("Servidor offline.");
                 return;
             } catch (IOException ioe) {
+                ioe.printStackTrace();
                 System.out.println("Problema com o socket utilizado para a conexao.");
                 return;
             }
@@ -102,21 +103,12 @@ public class Simulador {
 
             System.out.println("Reservas do Cliente #" + nrCliente + ": " + idsResevas); System.out.flush();
 
-            //Verificacao se coincide com os dados armazenados no servidor
-            try {
-                System.out.println("Reservas (no servidor) do Cliente #" + nrCliente + ": " + cliente.listaReservasUtilizador(nrPedido++).stream().map(InformacaoSobreReserva::getIdReserva).collect(Collectors.toList()));
-                System.out.flush();
-            } catch (ServerIsClosedException e) { return; }
-
-
             //Elimina Reservas efetuadas
             for(Integer id : idsResevas) {
                 try {
                     cliente.cancelaReserva(nrPedido++, id);
                 } catch (Exception ignored) {}
             }
-
-            System.out.println("Reservas do Cliente #" + nrCliente + " já foram removidas!"); System.out.flush();
 
             //Verificacao se coincide com os dados armazenados no servidor
             try {
@@ -203,7 +195,7 @@ public class Simulador {
     public static void main(String[] args) throws InterruptedException {
         //Inputs
         int nrTentativasReservaPorCliente = 10;
-        int nrClientes = 20;
+        int nrClientes = 1000;
         List<String> locais = Arrays.asList("Porto","Tokyo","NewYork","Lisboa","Madrid","Barcelona","Paris");
         String endereco = "localhost";
 
@@ -247,8 +239,10 @@ public class Simulador {
         Thread[] clientes = new Thread[nrClientes];
         for(int i = 0; i < nrClientes; i++)
             clientes[i] = new Thread(new ClienteRunner(i,locais,endereco,nrTentativasReservaPorCliente));
-        for(int i = 0; i < nrClientes; i++)
+        for(int i = 0; i < nrClientes; i++) {
             clientes[i].start();
+            if(i % 50 == 0) Thread.sleep(500); //TODO - tirar
+        }
         for(int i = 0; i < nrClientes; i++)
             clientes[i].join();
 
