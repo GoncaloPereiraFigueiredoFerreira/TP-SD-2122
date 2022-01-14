@@ -51,12 +51,10 @@ public class CriaConta implements OperacaoI{
 
             ois.close();
             bais.close();
-
             boolean adicionado = gestorDeDados.addUtilizador(username,password,admin);
             if (adicionado)
                 sendConfirmacao(tc,0,tag,f.getNumber()); //Conta criada com sucesso
             else sendConfirmacao(tc,1,tag,f.getNumber()); //Conta criada com sucesso
-
         } catch (IOException e) {
             e.printStackTrace();
         }

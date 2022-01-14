@@ -63,15 +63,16 @@ public class Simulador {
                         m.close();
                         s.close();
                     } catch (IOException ignored) {}
+                    System.out.println("Deu IOExeption");
                     return;
                 }
             } catch (ServerIsClosedException e) {
+                System.out.println("this shouldnt happen");
                 return;
             }
 
             Random random       = new Random();
             LocalDate dataAtual = LocalDate.now();
-
             //Faz reservas aleatórias e guarda o id das que conseguiu executar
             for(int i = 0; i < nrPedidosAExecutar; i++){
 
@@ -195,7 +196,7 @@ public class Simulador {
     public static void main(String[] args) throws InterruptedException {
         //Inputs
         int nrTentativasReservaPorCliente = 10;
-        int nrClientes = 1000;
+        int nrClientes = 100000;
         List<String> locais = Arrays.asList("Porto","Tokyo","NewYork","Lisboa","Madrid","Barcelona","Paris");
         String endereco = "localhost";
 
@@ -230,18 +231,13 @@ public class Simulador {
             System.out.flush();
         }catch (Exception exception) {return;}
 
-
-        System.out.println("Escreva algo para prosseguir");
-        new Scanner(System.in).next();
-        System.out.println("A começar"); System.out.flush();
-
         //Criacao de todos os clientes
         Thread[] clientes = new Thread[nrClientes];
         for(int i = 0; i < nrClientes; i++)
             clientes[i] = new Thread(new ClienteRunner(i,locais,endereco,nrTentativasReservaPorCliente));
         for(int i = 0; i < nrClientes; i++) {
             clientes[i].start();
-            if(i % 50 == 0) Thread.sleep(500); //TODO - tirar
+            if(i % 50 == 0) Thread.sleep(50); //TODO - tirar
         }
         for(int i = 0; i < nrClientes; i++)
             clientes[i].join();

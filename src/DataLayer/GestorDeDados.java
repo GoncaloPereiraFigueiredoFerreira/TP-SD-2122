@@ -69,7 +69,7 @@ public class GestorDeDados {
 			if (utilizadores.containsKey(idUtilizador)) return false;
 			utilizadores.put(idUtilizador, new Utilizador(idUtilizador, password, admin));
 			return true;
-		} finally { usersLock.unlock(); }
+		} finally { usersLock.unlock();}
 	}
 
 
@@ -93,7 +93,7 @@ public class GestorDeDados {
 
 			return -1;
 
-		} finally { usersLock.unlock(); }
+		} finally { usersLock.unlock();}
 	}
 
 
@@ -207,19 +207,19 @@ public class GestorDeDados {
 
 			if (dataReserva == null) return null;
 
-			viagensLock.lock();
 			usersLock.lock();
+			viagensLock.lock();
 		} finally { voosRwLock.readLock().unlock(); }
 
 		Integer idReserva;
 		try {
 			//Regista a reserva da viagem
 			try { idReserva = addViagem(idUtilizador, voosNaoOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
-			finally { viagensLock.unlock(); }
+			finally { viagensLock.unlock();}
 
 			//Adiciona o id da reserva à colecao do utilizador
 			utilizadores.get(idUtilizador).addIdReserva(idReserva);
-		} finally { usersLock.unlock(); }
+		} finally { usersLock.unlock();}
 
 		return new InformacaoSobreReserva(idReserva, dataReserva, localizacoes);
 	}
@@ -243,7 +243,6 @@ public class GestorDeDados {
 
 			try {
 				viagensLock.lock();
-
 				//Remove a reserva
 				viagem = viagens.get(idReserva);
 
@@ -252,15 +251,14 @@ public class GestorDeDados {
 				viagens.remove(idReserva);
 
 				voosRwLock.readLock().lock();
+			} finally { viagensLock.unlock();}
 
-			} finally { viagensLock.unlock(); }
-
-		}finally { usersLock.unlock(); }
+		}finally { usersLock.unlock();}
 
 		try {
 			for(String idVoo : viagem.getColecaoVoos())
 				removeReserva(idVoo, idUtilizador, viagem.getData());
-		} finally { voosRwLock.readLock().unlock(); }
+		} finally { voosRwLock.readLock().unlock();}
 
 		return true;
 	}
@@ -284,10 +282,10 @@ public class GestorDeDados {
 			try {
 				viagensLock.lock();
 				viagensUser = idsReservas.stream().map(viagens::get).collect(Collectors.toList()); }
-			finally { viagensLock.unlock(); }
+			finally { viagensLock.unlock();}
 
 			voosRwLock.readLock().lock();
-		} finally { usersLock.unlock(); }
+		} finally { usersLock.unlock();}
 
 		//Encontra as localizacoes pertencentes a cada uma das viagens e gera uma lista com as informacoes de cada reserva
 		try{

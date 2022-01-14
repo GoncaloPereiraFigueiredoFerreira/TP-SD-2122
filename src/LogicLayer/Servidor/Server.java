@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Server extends Thread {
@@ -73,6 +73,7 @@ public class Server extends Thread {
             ServerSocket ss = new ServerSocket(8888);
             AtomicBoolean running= new AtomicBoolean(true);
             ReadWriteLock rl = new ReentrantReadWriteLock();
+            AtomicInteger nrCliente = new AtomicInteger(1);
 
             while(getRunning(running,rl)) {
 
@@ -81,6 +82,7 @@ public class Server extends Thread {
 
                 Runnable worker = () -> {
                     try {
+                        System.out.println(nrCliente.getAndIncrement());
                         TaggedConnection c = new TaggedConnection(s);
                         while (getRunning(running,rl)) {
                             Frame frame = c.receive();
@@ -93,7 +95,9 @@ public class Server extends Thread {
                                     }finally {
                                         rl.writeLock().unlock();
                                     }
-                                } else addPedido(c, frame);
+                                } else {
+                                    addPedido(c, frame);
+                                }
                             }
                         }
                     } catch (IOException ignored) { }
