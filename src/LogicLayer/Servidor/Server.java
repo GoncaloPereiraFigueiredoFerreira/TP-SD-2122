@@ -71,9 +71,8 @@ public class Server extends Thread {
     public void run() {
         try {
             ServerSocket ss = new ServerSocket(8888);
-            AtomicBoolean running= new AtomicBoolean(true);
+            AtomicBoolean running = new AtomicBoolean(true);
             ReadWriteLock rl = new ReentrantReadWriteLock();
-            AtomicInteger nrCliente = new AtomicInteger(1);
 
             while(getRunning(running,rl)) {
 
@@ -82,7 +81,6 @@ public class Server extends Thread {
 
                 Runnable worker = () -> {
                     try {
-                        System.out.println(nrCliente.getAndIncrement());
                         TaggedConnection c = new TaggedConnection(s);
                         while (getRunning(running,rl)) {
                             Frame frame = c.receive();

@@ -16,43 +16,19 @@ public class GestorDeDados {
 	private final ReentrantLock usersLock 			  = new ReentrantLock();
 
 	//Voos
-	private final Map<String,Voo> voos     			      = new HashMap<>();
-	private final ReadWriteLock voosRwLock			      = new ReentrantReadWriteLock();
-	private final Map<String, Map<String,Voo>> grafoVoos  = new HashMap<>();
+	private final Map<String,Voo> voos     			     = new HashMap<>();
+	private final ReadWriteLock voosRwLock			     = new ReentrantReadWriteLock();
+	private final Map<String, Map<String,Voo>> grafoVoos = new HashMap<>();
 
 	//Viagens
-	private final Map<Integer,Viagem> viagens 		  = new HashMap<>();
-	private final ReentrantLock viagensLock  		  = new ReentrantLock();
+	private final Map<Integer,Viagem> viagens 	   = new HashMap<>();
+	private final ReentrantLock viagensLock  	   = new ReentrantLock();
 
 	//Dias Encerrados
-	private final Set<LocalDate> diasEncerrados    	  = new HashSet<>();
-	private final ReentrantLock diasEncerradosLock 	  = new ReentrantLock();
+	private final Set<LocalDate> diasEncerrados    = new HashSet<>();
+	private final ReentrantLock diasEncerradosLock = new ReentrantLock();
 
 	private static final int MAXVOOS = 3;
-
-	//TODO - remover estes prints
-
-	public void printUtilizadores(){
-		System.out.println("******* UTILIZADORES *******\n");
-		for(Utilizador u : utilizadores.values())
-			System.out.println(u);
-	}
-
-	public void printVoos(){
-		System.out.println("******* VOOS *******\n");
-		for(Map.Entry<String, Voo> e : voos.entrySet())
-			System.out.println("id: " + e.getKey() + " | voo: " + e.getValue());
-	}
-
-	public void printviagens(){
-		System.out.println("******* VIAGENS *******\n");
-		for(Map.Entry<Integer, Viagem> e : viagens.entrySet())
-			System.out.println("id: " + e.getKey() + " | viagem: " + e.getValue());
-	}
-
-	public void printDiasEncerrados(){
-		System.out.println(diasEncerrados);
-	}
 
 	// ---------- Métodos Gerais ---------- //
 
@@ -69,7 +45,7 @@ public class GestorDeDados {
 			if (utilizadores.containsKey(idUtilizador)) return false;
 			utilizadores.put(idUtilizador, new Utilizador(idUtilizador, password, admin));
 			return true;
-		} finally { usersLock.unlock();}
+		} finally { usersLock.unlock(); }
 	}
 
 
@@ -93,7 +69,7 @@ public class GestorDeDados {
 
 			return -1;
 
-		} finally { usersLock.unlock();}
+		} finally { usersLock.unlock(); }
 	}
 
 
@@ -173,55 +149,61 @@ public class GestorDeDados {
 			voosOrdenados = new ArrayList<>(voosNaoOrdenados);
 			voosOrdenados.sort(null);
 
-			//Tenta efetuar as reservas
-			boolean podeReservar;
+			try {
+				usersLock.lock();
+				viagensLock.lock();
 
-			for (data = dataInicial; dataReserva == null && (data.isBefore(dataFinal) || data.isEqual(dataFinal)); data = data.plusDays(1)) {
-				podeReservar = true;
+				//Tenta efetuar as reservas
+				boolean podeReservar;
 
-				if (!isDayClosed(data)) {
-					try {
-						//Obtem os locks de todas as reservas que pretende fazer
-						for (Voo voo : voosOrdenados)
-							voo.lock(data);
+				for (data = dataInicial; dataReserva == null && (data.isBefore(dataFinal) || data.isEqual(dataFinal)); data = data.plusDays(1)) {
+					podeReservar = true;
 
-						//Verifica disponibilidade para reserva
-						for (int i = 0; podeReservar && i < voosOrdenados.size(); i++) {
-							Voo voo 	 = voosOrdenados.get(i);
-							podeReservar = voo.podeReservar(idUtilizador, data);
-						}
+					if (!isDayClosed(data)) {
 
-						//Faz as reservas se houver disponibilidade
-						if (podeReservar) {
+						try {
+							//Obtem os locks de todas as reservas que pretende fazer
 							for (Voo voo : voosOrdenados)
-								voo.addViajante(idUtilizador, data);
-							dataReserva = data;
-						}
+								voo.lock(data);
 
-					} finally {
-						for (Voo voo : voosOrdenados)
-							voo.unlock(data);
+							//Verifica disponibilidade para reserva
+							for (int i = 0; podeReservar && i < voosOrdenados.size(); i++) {
+								Voo voo = voosOrdenados.get(i);
+								podeReservar = voo.podeReservar(idUtilizador, data);
+							}
+
+							//Faz as reservas se houver disponibilidade
+							if (podeReservar) {
+								for (Voo voo : voosOrdenados)
+									voo.addViajante(idUtilizador, data);
+								dataReserva = data;
+							}
+
+						} finally {
+							for (Voo voo : voosOrdenados)
+								voo.unlock(data);
+						}
 					}
 				}
+
+				//Retorna null caso não tenha sido possivel efetuar as reservas
+				if (dataReserva == null) return null;
+
+				//Regista a reserva da viagem
+				Integer idReserva;
+				try { idReserva = addViagem(idUtilizador, voosNaoOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
+				finally { viagensLock.unlock();}
+
+				//Adiciona o id da reserva à colecao do utilizador
+				utilizadores.get(idUtilizador).addIdReserva(idReserva);
+
+				return new InformacaoSobreReserva(idReserva, dataReserva, localizacoes);
+
+			} finally {
+				usersLock.unlock();
+				tryUnlockReentrantLock(viagensLock);
 			}
-
-			if (dataReserva == null) return null;
-
-			usersLock.lock();
-			viagensLock.lock();
 		} finally { voosRwLock.readLock().unlock(); }
-
-		Integer idReserva;
-		try {
-			//Regista a reserva da viagem
-			try { idReserva = addViagem(idUtilizador, voosNaoOrdenados.stream().map(Voo::getIdVoo).collect(Collectors.toList()), dataReserva); }
-			finally { viagensLock.unlock();}
-
-			//Adiciona o id da reserva à colecao do utilizador
-			utilizadores.get(idUtilizador).addIdReserva(idReserva);
-		} finally { usersLock.unlock();}
-
-		return new InformacaoSobreReserva(idReserva, dataReserva, localizacoes);
 	}
 
 
@@ -235,6 +217,7 @@ public class GestorDeDados {
 		Viagem viagem;
 
 		try {
+			voosRwLock.readLock().lock();
 			usersLock.lock();
 
 			//Verifica existencia do utilizador e se o identificador da reserva pertence à colecao deste
@@ -243,6 +226,10 @@ public class GestorDeDados {
 
 			try {
 				viagensLock.lock();
+
+				//Liberta o lock dos utilizadores que já não é necessário
+				usersLock.unlock();
+
 				//Remove a reserva
 				viagem = viagens.get(idReserva);
 
@@ -250,15 +237,15 @@ public class GestorDeDados {
 
 				viagens.remove(idReserva);
 
-				voosRwLock.readLock().lock();
 			} finally { viagensLock.unlock();}
 
-		}finally { usersLock.unlock();}
-
-		try {
 			for(String idVoo : viagem.getColecaoVoos())
 				removeReserva(idVoo, idUtilizador, viagem.getData());
-		} finally { voosRwLock.readLock().unlock();}
+
+		}finally {
+			voosRwLock.readLock().unlock();
+			tryUnlockReentrantLock(usersLock);
+		}
 
 		return true;
 	}
@@ -272,27 +259,26 @@ public class GestorDeDados {
 		Collection<Viagem> viagensUser;
 
 		try {
+			voosRwLock.readLock().lock();
+
 			//Verifica existencia do utilizador e recolhe os ids de todas as reservas feitas por este
 			usersLock.lock();
 			Utilizador u = utilizadores.get(idUtilizador);
 			if(u == null) return null;
 			idsReservas = u.getIdsReserva();
+			usersLock.unlock();
 
 			//Encontra todas as viagens através do respetivo id
 			try {
 				viagensLock.lock();
 				viagensUser = idsReservas.stream().map(viagens::get).collect(Collectors.toList()); }
-			finally { viagensLock.unlock();}
+			finally { viagensLock.unlock(); }
 
-			voosRwLock.readLock().lock();
-		} finally { usersLock.unlock();}
-
-		//Encontra as localizacoes pertencentes a cada uma das viagens e gera uma lista com as informacoes de cada reserva
-		try{
+			//Encontra as localizacoes pertencentes a cada uma das viagens e gera uma lista com as informacoes de cada reserva
 			Collection<InformacaoSobreReserva> listaInformacoesReservas = new ArrayList<>();
 			for(Viagem v : viagensUser){
 				List<String> idsVoos = v.getColecaoVoos(),
-							 locais  = new ArrayList<>();
+						locais  = new ArrayList<>();
 
 				//Adiciona a origem e o destino do primeiro voo
 				Voo voo = voos.get(idsVoos.get(0));
@@ -307,7 +293,11 @@ public class GestorDeDados {
 			}
 
 			return listaInformacoesReservas;
-		} finally { voosRwLock.readLock().unlock(); }
+
+		} finally {
+			voosRwLock.readLock().unlock();
+			tryUnlockReentrantLock(usersLock);
+		}
 	}
 
 	/**
@@ -503,4 +493,12 @@ public class GestorDeDados {
 		return null;
 	}
 
+	/**
+	 * Liberta um ReentrantLock se o possuir
+	 * @param lock Lock que se pretende libertar
+	 */
+	private void tryUnlockReentrantLock(ReentrantLock lock){
+		if(lock.isHeldByCurrentThread())
+			lock.unlock();
+	}
 }
