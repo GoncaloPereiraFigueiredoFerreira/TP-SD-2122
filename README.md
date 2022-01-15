@@ -27,15 +27,6 @@ Foram desenvolvidos 3 executáveis:
     java -jar Simulador.jar
   ```  
 
-Para voltar a compilar o projeto deverá utilizar a versão 11 do Java.
-```
-  javac --release 11 src/*.java
-``` 
-
-```
-  java FFSync <pasta partilhada> <ip externo> [-t <nº threads maximo>] [-w <window size>]
-``` 
-
 Realizado por:
   Grupo 3
 
