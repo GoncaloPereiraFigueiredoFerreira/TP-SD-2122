@@ -195,8 +195,13 @@ public class Simulador {
 
     public static void main(String[] args) throws InterruptedException {
         //Inputs
-        int nrTentativasReservaPorCliente = 10;
-        int nrClientes = 20000;
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Introduza o numero de clientes (seja benevolente nao passe dos 20'000  =) )");
+        int nrClientes = sc.nextInt();
+        System.out.println("Introduza o nº de pedidos por cliente");
+        int nrTentativasReservaPorCliente = sc.nextInt();
+
+
         List<String> locais = Arrays.asList("Porto","Tokyo","NewYork","Lisboa","Madrid","Barcelona","Paris");
         String endereco = "localhost";
 
@@ -226,6 +231,9 @@ public class Simulador {
 
         //Listagem dos voos
         try {
+            System.out.println("-------------------Simulador Pronto!------------------");
+            System.out.println("->Existirao: "+ nrClientes+ " clientes em paralelo");
+            System.out.println("->Cada cliente executara "+ nrTentativasReservaPorCliente +" pedidos de reservas a voos aleatorios");
             List<List<String>> listaVoos = cliente.listaVoosPossiveis(nrPedido);
             System.out.println("Listagem voos:\n\n" + listaVoos + "\nNr voos possiveis = " + listaVoos.size());
             System.out.flush();
@@ -241,7 +249,7 @@ public class Simulador {
             clientes[i] = new Thread(new ClienteRunner(i,locais,endereco,nrTentativasReservaPorCliente));
         for(int i = 0; i < nrClientes; i++) {
             clientes[i].start();
-            if(i % 50 == 0) Thread.sleep(150); //Necessario para evitar conexoes recusadas
+            if(i % 50 == 0) Thread.sleep(200); //Necessario para evitar conexoes recusadas
         }
         for(int i = 0; i < nrClientes; i++)
             clientes[i].join();

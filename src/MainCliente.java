@@ -225,18 +225,18 @@ public class MainCliente {
         try {
             printsLock.lock();
 
-            MenuInput m = new MenuInput("Insira o numero de localizacoes que pretende inserir", "Numero: ");
+            MenuInput m = new MenuInput("Insira o numero de localizacoes pelas quais quer passar", "Numero: ");
             MenuInput m1 = new MenuInput("Insira uma localizacao", "Localizacao:");
-            MenuInput m2 = new MenuInput("Insira a data inicial (com o formato \"YYYY-MM-DD\")", "Data: ");
-            MenuInput m3 = new MenuInput("Insira a data final (com o formato \"YYYY-MM-DD\")", "Data: ");
+            MenuInput m2 = new MenuInput("Insira o limite inicial da data da reserva (com o formato \"YYYY-MM-DD\")", "Data: ");
+            MenuInput m3 = new MenuInput("Insira o limite final da data da reserva  (com o formato \"YYYY-MM-DD\")", "Data: ");
 
             Integer nrLocais = null;
 
             while (nrLocais == null || nrLocais < 2) {
                 try {
                     m.executa();
-                    nrLocais = Integer.parseInt(m.getOpcao());
-                    if(nrLocais < 2) System.out.println("Por favor insira um número igual ou superior a 2.");
+                    nrLocais = Integer.parseInt(m.getOpcao()) +1 ;
+                    if(nrLocais < 2) System.out.println("Por favor insira um número igual ou superior a 1.");
                 } catch (NumberFormatException nfe) {
                     System.out.println("Por favor insira um numero inteiro.");
                 }
@@ -511,7 +511,7 @@ public class MainCliente {
                 String headerPedido = "Listar reservas";
 
                 if (reservas == null) printRespostaPedido(headerPedido, "Falha de conexao");
-                else if (reservas.size() == 0) printRespostaPedido(headerPedido, "Não existem reservas");
+                else if (reservas.size() == 0) printRespostaPedido(headerPedido, "Nao existem reservas");
                 else{
                     StringBuilder sb = new StringBuilder();
                     for (InformacaoSobreReserva reserva:reservas){
