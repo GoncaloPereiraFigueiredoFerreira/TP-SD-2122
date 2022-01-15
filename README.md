@@ -7,13 +7,13 @@ Foram desenvolvidos 3 executáveis:
   - MainCliente: 
       Permite executar operações de cliente/administrador. É necessário inicio prévio do servidor.
   ```
-    java -jar Cliente.jar
+    java -jar client.jar
   ```  
 
   - ServerMain: 
       Inicia o servidor.
   ```
-    java -jar Server.jar
+    java -jar server.jar
   ```  
 
   - Simulador: 
@@ -24,7 +24,7 @@ Foram desenvolvidos 3 executáveis:
       Se o número de clientes - valor X introduzido pelo utilizador - for suficientemente grande, 
       é possível iniciar instâncias individuais de MainCliente, permitindo uma aproximação ao uso "real".
   ```
-    java -jar Simulador.jar
+    java -jar simulador.jar
   ```  
 
 Realizado por:
