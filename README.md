@@ -27,6 +27,8 @@ Foram desenvolvidos 3 executáveis:
     java -jar simulador.jar
   ```  
 
+Nota Final: 19 / 20
+
 Realizado por:
   Grupo 3
 
