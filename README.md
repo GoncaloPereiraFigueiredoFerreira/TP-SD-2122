@@ -1,6 +1,8 @@
 # TP-SD-2122
 
-Projeto realizado no ambito da UC de Sistemas Distribuidos, no curso Licenciatura em Engenharia Informática em Universidade do Minho.
+Projeto de gestão de voos realizado no ambito da UC de Sistemas Distribuidos, no curso Licenciatura em Engenharia Informática em Universidade do Minho.
+
+Final Grade: 19 / 20
 
 Foram desenvolvidos 3 executáveis:
 
@@ -27,15 +29,10 @@ Foram desenvolvidos 3 executáveis:
     java -jar simulador.jar
   ```  
 
-Nota Final: 19 / 20
 
-Realizado por:
-  Grupo 3
 
-  Alexandre Martins (A93315)
-
-  Gonçalo Ferreira (A93218)
-
-  Gonçalo Santos (A)
-
-  Luis Silva (A93293)
+Realizado por:  
+  Alexandre Martins  
+  Gonçalo Ferreira  
+  Gonçalo Santos   
+  Luis Silva   
